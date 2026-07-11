@@ -3,24 +3,29 @@ package com.nextrank.feature.home.presentation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import org.koin.compose.viewmodel.koinViewModel
+import com.nextrank.core.designsystem.component.GamerAccentLime
+import com.nextrank.core.designsystem.component.GamerAccentOrange
+import com.nextrank.core.designsystem.component.GamerAccentPink
+import com.nextrank.core.designsystem.component.GamerChip
+import com.nextrank.core.designsystem.component.GamerHeader
+import com.nextrank.core.designsystem.component.GamerPanel
+import com.nextrank.core.designsystem.component.GamerPrimaryButton
+import com.nextrank.core.designsystem.component.GamerScreen
+import com.nextrank.core.designsystem.component.GamerSecondaryButton
+import com.nextrank.core.designsystem.component.GamerStatCard
+import com.nextrank.core.designsystem.component.GamerStatRow
 import com.nextrank.feature.home.R
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun HomeScreen(
@@ -52,125 +57,71 @@ private fun HomeContent(
     onLogoutClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        // Header
-        Text(
-            text = stringResource(R.string.home_welcome, uiState.nickname),
-            style = MaterialTheme.typography.headlineSmall,
+    GamerScreen(modifier = modifier) {
+        GamerHeader(
+            title = stringResource(R.string.home_welcome, uiState.nickname),
+            subtitle = "Короткая тренировка, понятная цель и видимый прогресс каждый день.",
         )
 
-        // Stats row
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            StatCard(
+        GamerStatRow {
+            GamerStatCard(
                 label = stringResource(R.string.home_level),
                 value = "${uiState.level}",
+                accent = GamerAccentLime,
                 modifier = Modifier.weight(1f),
             )
-            StatCard(
+            GamerStatCard(
                 label = stringResource(R.string.home_xp),
                 value = "${uiState.totalXp}",
                 modifier = Modifier.weight(1f),
             )
-            StatCard(
+            GamerStatCard(
                 label = stringResource(R.string.home_streak),
                 value = "${uiState.streak}",
+                accent = GamerAccentOrange,
                 modifier = Modifier.weight(1f),
             )
         }
 
-        // Daily plan card
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            onClick = onTrainingClick,
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-            ),
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+        GamerPanel(accent = GamerAccentPink) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Text(
-                    text = stringResource(R.string.home_daily_plan),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    text = stringResource(R.string.home_daily_plan_desc, uiState.exerciseCount, uiState.estimatedMinutes),
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.weight(1f)) {
                     Text(
-                        text = stringResource(R.string.home_start),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary,
+                        text = stringResource(R.string.home_daily_plan),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.ExtraBold,
+                    )
+                    Text(
+                        text = stringResource(
+                            R.string.home_daily_plan_desc,
+                            uiState.exerciseCount,
+                            uiState.estimatedMinutes,
+                        ),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
+                GamerChip(text = "${uiState.estimatedMinutes} MIN")
             }
+            GamerPrimaryButton(
+                text = stringResource(R.string.home_start),
+                onClick = onTrainingClick,
+                enabled = uiState.planId != null,
+            )
         }
 
-        // Navigation buttons
-        OutlinedButton(
-            onClick = onProgressClick,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(stringResource(R.string.home_progress))
-        }
-
-        OutlinedButton(
-            onClick = onProfileClick,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(stringResource(R.string.home_profile))
-        }
-
-        OutlinedButton(
-            onClick = onLogoutClick,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(stringResource(R.string.home_logout))
-        }
-    }
-}
-
-@Composable
-private fun StatCard(
-    label: String,
-    value: String,
-    modifier: Modifier = Modifier,
-) {
-    Card(
-        modifier = modifier,
-    ) {
-        Column(
-            modifier = Modifier.padding(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
+        GamerPanel {
             Text(
-                text = value,
-                style = MaterialTheme.typography.headlineMedium,
+                text = "Быстрый доступ",
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
             )
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            GamerSecondaryButton(text = stringResource(R.string.home_progress), onClick = onProgressClick)
+            GamerSecondaryButton(text = stringResource(R.string.home_profile), onClick = onProfileClick)
+            GamerSecondaryButton(text = stringResource(R.string.home_logout), onClick = onLogoutClick)
         }
     }
 }

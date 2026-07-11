@@ -31,12 +31,15 @@ data class CatalogExercise(
     val slug: String,
     val title: String,
     val description: String,
+    val instructions: String,
+    val resultType: String,
     val estimatedMinutes: Int,
     val baseXp: Int,
 )
 
 interface TrainingRepository {
     suspend fun startOrResume(planId: String): Result<TrainingSession>
+    suspend fun startExercise(exerciseId: String): Result<TrainingSession>
     suspend fun complete(
         sessionId: String,
         itemIds: List<String>,

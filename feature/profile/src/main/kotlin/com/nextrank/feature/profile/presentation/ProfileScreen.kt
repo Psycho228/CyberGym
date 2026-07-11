@@ -3,17 +3,11 @@ package com.nextrank.feature.profile.presentation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -23,8 +17,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import org.koin.compose.viewmodel.koinViewModel
+import com.nextrank.core.designsystem.component.GamerAccentLime
+import com.nextrank.core.designsystem.component.GamerAccentOrange
+import com.nextrank.core.designsystem.component.GamerHeader
+import com.nextrank.core.designsystem.component.GamerPanel
+import com.nextrank.core.designsystem.component.GamerScreen
+import com.nextrank.core.designsystem.component.GamerSecondaryButton
+import com.nextrank.core.designsystem.component.GamerStatCard
+import com.nextrank.core.designsystem.component.GamerStatRow
 import com.nextrank.feature.profile.R
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun ProfileScreen(
@@ -35,49 +37,28 @@ fun ProfileScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        Text(
-            text = stringResource(R.string.profile_title),
-            style = MaterialTheme.typography.headlineMedium,
-        )
+    GamerScreen(modifier = modifier) {
+        Column(
+            modifier = Modifier.verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            GamerHeader(
+                title = stringResource(R.string.profile_title),
+                subtitle = "Твоя карточка игрока, цели и текущая форма.",
+            )
 
-        when {
-            uiState.isLoading -> {
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
-                )
-            }
-            uiState.errorMessage != null -> {
-                Text(
-                    text = uiState.errorMessage!!,
-                    color = MaterialTheme.colorScheme.error,
-                )
-                OutlinedButton(
-                    onClick = viewModel::loadProfile,
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text("Повторить") }
-            }
-            else -> {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    ),
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
+            when {
+                uiState.isLoading -> CircularProgressIndicator(Modifier.align(Alignment.CenterHorizontally))
+                uiState.errorMessage != null -> {
+                    Text(uiState.errorMessage!!, color = MaterialTheme.colorScheme.error)
+                    GamerSecondaryButton(text = "Повторить", onClick = viewModel::loadProfile)
+                }
+                else -> {
+                    GamerPanel(accent = GamerAccentLime) {
                         Text(
                             text = uiState.nickname,
                             style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.ExtraBold,
                         )
                         ProfileRow(
                             label = stringResource(R.string.profile_rank),
@@ -89,52 +70,40 @@ fun ProfileScreen(
                         )
                         ProfileRow(
                             label = stringResource(R.string.profile_daily_minutes),
-                            value = "${uiState.dailyMinutes}",
+                            value = "${uiState.dailyMinutes} мин",
                         )
                     }
+
+                    GamerStatRow {
+                        GamerStatCard(
+                            label = stringResource(R.string.profile_level),
+                            value = "${uiState.level}",
+                            accent = GamerAccentLime,
+                            modifier = Modifier.weight(1f),
+                        )
+                        GamerStatCard(
+                            label = stringResource(R.string.profile_total_xp),
+                            value = "${uiState.totalXp}",
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                    GamerStatRow {
+                        GamerStatCard(
+                            label = stringResource(R.string.profile_current_streak),
+                            value = "${uiState.currentStreak}",
+                            accent = GamerAccentOrange,
+                            modifier = Modifier.weight(1f),
+                        )
+                        GamerStatCard(
+                            label = stringResource(R.string.profile_longest_streak),
+                            value = "${uiState.longestStreak}",
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+
+                    GamerSecondaryButton(text = "Назад", onClick = onBack)
+                    GamerSecondaryButton(text = stringResource(R.string.profile_logout), onClick = onLogout)
                 }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    StatCard(
-                        label = stringResource(R.string.profile_level),
-                        value = "${uiState.level}",
-                        modifier = Modifier.weight(1f),
-                    )
-                    StatCard(
-                        label = stringResource(R.string.profile_total_xp),
-                        value = "${uiState.totalXp}",
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    StatCard(
-                        label = stringResource(R.string.profile_current_streak),
-                        value = "${uiState.currentStreak}",
-                        modifier = Modifier.weight(1f),
-                    )
-                    StatCard(
-                        label = stringResource(R.string.profile_longest_streak),
-                        value = "${uiState.longestStreak}",
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-
-                OutlinedButton(
-                    onClick = onBack,
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text("Назад") }
-
-                Button(
-                    onClick = onLogout,
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text(stringResource(R.string.profile_logout)) }
             }
         }
     }
@@ -154,29 +123,7 @@ private fun ProfileRow(label: String, value: String) {
         Text(
             text = value,
             style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Medium,
+            fontWeight = FontWeight.Bold,
         )
-    }
-}
-
-@Composable
-private fun StatCard(label: String, value: String, modifier: Modifier = Modifier) {
-    Card(modifier = modifier) {
-        Column(
-            modifier = Modifier.padding(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(
-                text = value,
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
-            )
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
     }
 }

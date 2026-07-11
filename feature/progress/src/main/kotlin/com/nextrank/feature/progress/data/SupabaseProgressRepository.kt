@@ -42,6 +42,16 @@ class SupabaseProgressRepository(
                 limit(10)
             }
             .decodeList<SessionDto>()
+        val practiceSessions = supabaseClient.from("practice_sessions")
+            .select {
+                filter { eq("user_id", userId); eq("status", "completed") }
+                order("completed_at", Order.DESCENDING)
+                limit(10)
+            }
+            .decodeList<SessionDto>()
+        val recentSessions = (sessions + practiceSessions)
+            .sortedByDescending { it.completedAt.orEmpty() }
+            .take(10)
 
         ProgressData(
             stats = ProgressStats(
@@ -49,7 +59,7 @@ class SupabaseProgressRepository(
                 totalXp = profile.totalXp,
                 currentStreak = profile.currentStreak,
                 longestStreak = profile.longestStreak,
-                totalTrainings = sessions.size,
+                totalTrainings = sessions.size + practiceSessions.size,
             ),
             achievements = achievements.map {
                 AchievementInfo(
@@ -60,7 +70,7 @@ class SupabaseProgressRepository(
                     isUnlocked = it.id in unlockedIds,
                 )
             },
-            recentSessions = sessions.map {
+            recentSessions = recentSessions.map {
                 SessionHistoryItem(
                     sessionId = it.id,
                     awardedXp = it.awardedXp,

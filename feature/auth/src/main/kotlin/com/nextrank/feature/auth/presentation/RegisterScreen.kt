@@ -2,15 +2,16 @@ package com.nextrank.feature.auth.presentation
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -24,12 +25,17 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import org.koin.compose.viewmodel.koinViewModel
+import com.nextrank.core.designsystem.component.GamerAccentLime
+import com.nextrank.core.designsystem.component.GamerPanel
+import com.nextrank.core.designsystem.component.GamerPrimaryButton
+import com.nextrank.core.designsystem.component.GamerScreen
 import com.nextrank.feature.auth.R
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun RegisterScreen(
@@ -39,134 +45,116 @@ fun RegisterScreen(
     viewModel: AuthViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
-
-    RegisterContent(
-        uiState = uiState,
-        onEmailChange = viewModel::onEmailChange,
-        onPasswordChange = viewModel::onPasswordChange,
-        onRegister = viewModel::onRegister,
-        onNavigateToLogin = onNavigateToLogin,
-        onRegisterSuccess = onRegisterSuccess,
-        modifier = modifier,
-    )
-}
-
-@Composable
-private fun RegisterContent(
-    uiState: AuthUiState,
-    onEmailChange: (String) -> Unit,
-    onPasswordChange: (String) -> Unit,
-    onRegister: () -> Unit,
-    onNavigateToLogin: () -> Unit,
-    onRegisterSuccess: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
     val emailFocusRequester = remember { FocusRequester() }
     val passwordFocusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
 
     LaunchedEffect(uiState.isLoggedIn) {
-        if (uiState.isLoggedIn) {
-            onRegisterSuccess()
-        }
+        if (uiState.isLoggedIn) onRegisterSuccess()
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Text(
-            text = stringResource(R.string.register_title),
-            style = MaterialTheme.typography.headlineMedium,
-        )
-        Text(
-            text = stringResource(R.string.register_subtitle),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 4.dp),
-        )
-
+    GamerScreen(modifier = modifier) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+                .weight(1f)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
-            OutlinedTextField(
-                value = uiState.email,
-                onValueChange = onEmailChange,
-                label = { Text(stringResource(R.string.email_label)) },
-                placeholder = { Text(stringResource(R.string.email_placeholder)) },
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Email,
-                    imeAction = ImeAction.Next,
-                ),
-                keyboardActions = KeyboardActions(
-                    onNext = { passwordFocusRequester.requestFocus() },
-                ),
-                enabled = !uiState.isLoading,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .focusRequester(emailFocusRequester),
-                singleLine = true,
+            Text(
+                text = "CYBERGYM",
+                style = MaterialTheme.typography.displayMedium,
+                color = GamerAccentLime,
+                fontWeight = FontWeight.ExtraBold,
+                modifier = Modifier.padding(top = 24.dp),
             )
-
-            OutlinedTextField(
-                value = uiState.password,
-                onValueChange = onPasswordChange,
-                label = { Text(stringResource(R.string.password_label)) },
-                placeholder = { Text(stringResource(R.string.password_placeholder)) },
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Password,
-                    imeAction = ImeAction.Done,
-                ),
-                keyboardActions = KeyboardActions(
-                    onDone = {
-                        focusManager.clearFocus()
-                        onRegister()
-                    },
-                ),
-                enabled = !uiState.isLoading,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .focusRequester(passwordFocusRequester),
-                singleLine = true,
-            )
-
-            Button(
-                onClick = onRegister,
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !uiState.isLoading && uiState.email.isNotBlank() && uiState.password.isNotBlank(),
+            Column(
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.padding(top = 20.dp, bottom = 12.dp),
             ) {
-                if (uiState.isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.padding(4.dp),
-                        strokeWidth = 2.dp,
-                    )
-                } else {
-                    Text(stringResource(R.string.register_button))
-                }
-            }
-
-            TextButton(
-                onClick = onNavigateToLogin,
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-            ) {
-                Text(stringResource(R.string.has_account_question))
-            }
-
-            uiState.errorMessage?.let { error ->
                 Text(
-                    text = error,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(top = 8.dp),
+                    text = stringResource(R.string.register_title),
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    fontWeight = FontWeight.ExtraBold,
                 )
+                Text(
+                    text = stringResource(R.string.register_subtitle),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            GamerPanel {
+                RegisterTextField(
+                    value = uiState.email,
+                    onValueChange = viewModel::onEmailChange,
+                    label = stringResource(R.string.email_label),
+                    placeholder = stringResource(R.string.email_placeholder),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions(onNext = { passwordFocusRequester.requestFocus() }),
+                    enabled = !uiState.isLoading,
+                    modifier = Modifier.focusRequester(emailFocusRequester),
+                )
+                RegisterTextField(
+                    value = uiState.password,
+                    onValueChange = viewModel::onPasswordChange,
+                    label = stringResource(R.string.password_label),
+                    placeholder = stringResource(R.string.password_placeholder),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            focusManager.clearFocus()
+                            viewModel.onRegister()
+                        },
+                    ),
+                    enabled = !uiState.isLoading,
+                    modifier = Modifier.focusRequester(passwordFocusRequester),
+                    isPassword = true,
+                )
+                GamerPrimaryButton(
+                    text = stringResource(R.string.register_button),
+                    onClick = viewModel::onRegister,
+                    enabled = !uiState.isLoading && uiState.email.isNotBlank() && uiState.password.isNotBlank(),
+                )
+                if (uiState.isLoading) CircularProgressIndicator(Modifier.align(Alignment.CenterHorizontally))
+                TextButton(onClick = onNavigateToLogin, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                    Text(stringResource(R.string.has_account_question), fontWeight = FontWeight.Bold)
+                }
+                uiState.errorMessage?.let {
+                    Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                }
             }
         }
     }
+}
+
+@Composable
+private fun RegisterTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    placeholder: String,
+    keyboardOptions: KeyboardOptions,
+    keyboardActions: KeyboardActions,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+    isPassword: Boolean = false,
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(label) },
+        placeholder = { Text(placeholder) },
+        visualTransformation = if (isPassword) PasswordVisualTransformation() else androidx.compose.ui.text.input.VisualTransformation.None,
+        keyboardOptions = keyboardOptions,
+        keyboardActions = keyboardActions,
+        enabled = enabled,
+        modifier = modifier.fillMaxWidth(),
+        singleLine = true,
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.20f),
+        ),
+    )
 }

@@ -12,6 +12,7 @@ sealed interface Route {
     object Training : Route
     object TrainingSession : Route {
         fun createRoute(sessionId: String): String = "training_session/$sessionId"
+        fun createExerciseRoute(exerciseId: String): String = "training_session/exercise-$exerciseId"
     }
     object Progress : Route
     object Profile : Route

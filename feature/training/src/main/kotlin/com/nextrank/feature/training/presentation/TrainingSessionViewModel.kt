@@ -32,13 +32,25 @@ class TrainingSessionViewModel(private val repository: TrainingRepository) : Vie
     fun load(planId: String) {
         if (_uiState.value.sessionId != null) return
         viewModelScope.launch {
-            when (val result = repository.startOrResume(planId)) {
+            val result = if (planId.startsWith("exercise-")) {
+                repository.startExercise(planId.removePrefix("exercise-"))
+            } else {
+                repository.startOrResume(planId)
+            }
+            when (result) {
                 is Result.Success -> _uiState.update {
-                    it.copy(isLoading = false, planTitle = result.data.planTitle,
-                        sessionId = result.data.sessionId, exercises = result.data.exercises)
+                    it.copy(
+                        isLoading = false,
+                        planTitle = result.data.planTitle,
+                        sessionId = result.data.sessionId,
+                        exercises = result.data.exercises,
+                    )
                 }
                 is Result.Failure -> _uiState.update {
-                    it.copy(isLoading = false, errorMessage = "Не удалось открыть тренировку")
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = "Не удалось открыть тренировку. ${result.error.message.orEmpty()}".trim(),
+                    )
                 }
             }
         }
@@ -54,12 +66,22 @@ class TrainingSessionViewModel(private val repository: TrainingRepository) : Vie
         if (state.isCompleting || state.isComplete) return
         _uiState.update { it.copy(isCompleting = true, errorMessage = null) }
         viewModelScope.launch {
-            when (repository.complete(sessionId, state.exercises.map { it.itemId }, completionKey)) {
+            when (val result = repository.complete(sessionId, state.exercises.map { it.itemId }, completionKey)) {
                 is Result.Success -> _uiState.update { it.copy(isCompleting = false, isComplete = true) }
-                is Result.Failure -> _uiState.update { it.copy(
-                    isCompleting = false,
-                    errorMessage = "Не удалось сохранить тренировку. Попробуйте ещё раз.",
-                ) }
+                is Result.Failure -> _uiState.update {
+                    it.copy(
+                        isCompleting = false,
+                        errorMessage = buildString {
+                            append("Не удалось завершить тренировку.")
+                            result.error.message
+                                ?.takeIf { message -> message.isNotBlank() }
+                                ?.let { message ->
+                                    append(" Причина: ")
+                                    append(message.take(220))
+                                }
+                        },
+                    )
+                }
             }
         }
     }

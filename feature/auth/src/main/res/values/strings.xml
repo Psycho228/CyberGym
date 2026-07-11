@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">NextRank</string>
+    <string name="app_name">CyberGym</string>
     <string name="login_title">Вход</string>
     <string name="login_subtitle">Войдите в свой аккаунт</string>
     <string name="email_label">Email</string>

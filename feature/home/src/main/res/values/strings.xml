@@ -3,9 +3,9 @@
     <string name="home_welcome">Привет, %s!</string>
     <string name="home_level">Уровень</string>
     <string name="home_xp">XP</string>
-    <string name="home_streak">Streak</string>
+    <string name="home_streak">Серия</string>
     <string name="home_daily_plan">Тренировка дня</string>
-    <string name="home_daily_plan_desc">%d упражнений • ~%d мин</string>
+    <string name="home_daily_plan_desc">%1$d упражнений • ~%2$d мин</string>
     <string name="home_start">Начать</string>
     <string name="home_progress">Прогресс</string>
     <string name="home_profile">Профиль</string>

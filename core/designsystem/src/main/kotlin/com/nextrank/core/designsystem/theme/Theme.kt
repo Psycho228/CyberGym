@@ -6,24 +6,29 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 
 // --- Colors ---
 
-val PrimaryLight = Color(0xFF6C63FF)
-val PrimaryDark = Color(0xFF8B83FF)
-val PrimaryContainerLight = Color(0xFFE8E6FF)
-val PrimaryContainerDark = Color(0xFF2A2660)
+val PrimaryLight = Color(0xFF00E5FF)
+val PrimaryDark = Color(0xFF00E5FF)
+val PrimaryContainerLight = Color(0xFF0A3A46)
+val PrimaryContainerDark = Color(0xFF053640)
 
-val BackgroundLight = Color(0xFFF8F9FF)
-val BackgroundDark = Color(0xFF121218)
-val SurfaceLight = Color(0xFFFFFFFF)
-val SurfaceDark = Color(0xFF1E1E28)
+val BackgroundLight = Color(0xFF071018)
+val BackgroundDark = Color(0xFF071018)
+val SurfaceLight = Color(0xFF0F1A24)
+val SurfaceDark = Color(0xFF0F1A24)
 
-val TextPrimaryLight = Color(0xFF1A1A2E)
-val TextPrimaryDark = Color(0xFFEAEAFF)
-val TextSecondaryLight = Color(0xFF6B6B8D)
-val TextSecondaryDark = Color(0xFF9999B3)
+val TextPrimaryLight = Color(0xFFEAF7FF)
+val TextPrimaryDark = Color(0xFFEAF7FF)
+val TextSecondaryLight = Color(0xFF93A8B8)
+val TextSecondaryDark = Color(0xFF93A8B8)
+
+val NeonLime = Color(0xFFB6FF3B)
+val NeonPink = Color(0xFFFF3DF2)
+val CombatOrange = Color(0xFFFF9F1C)
+val HudLine = Color(0xFF244152)
+val PanelDark = Color(0xFF0B141D)
 
 val SuccessLight = Color(0xFF2ECC71)
 val SuccessDark = Color(0xFF27AE60)
@@ -36,14 +41,14 @@ val WarningDark = Color(0xFFE67E22)
 
 private val LightColorScheme = lightColorScheme(
     primary = PrimaryLight,
-    onPrimary = Color.White,
+    onPrimary = Color(0xFF001B22),
     primaryContainer = PrimaryContainerLight,
-    onPrimaryContainer = Color(0xFF2A2660),
+    onPrimaryContainer = TextPrimaryLight,
     background = BackgroundLight,
     onBackground = TextPrimaryLight,
     surface = SurfaceLight,
     onSurface = TextPrimaryLight,
-    surfaceVariant = Color(0xFFF0F0F8),
+    surfaceVariant = Color(0xFF172838),
     onSurfaceVariant = TextSecondaryLight,
     error = ErrorLight,
     onError = Color.White,
@@ -51,25 +56,25 @@ private val LightColorScheme = lightColorScheme(
 
 private val DarkColorScheme = darkColorScheme(
     primary = PrimaryDark,
-    onPrimary = Color(0xFF1A1A2E),
+    onPrimary = Color(0xFF001B22),
     primaryContainer = PrimaryContainerDark,
-    onPrimaryContainer = Color(0xFFD4D0FF),
+    onPrimaryContainer = TextPrimaryDark,
     background = BackgroundDark,
     onBackground = TextPrimaryDark,
     surface = SurfaceDark,
     onSurface = TextPrimaryDark,
-    surfaceVariant = Color(0xFF2A2A38),
+    surfaceVariant = Color(0xFF172838),
     onSurfaceVariant = TextSecondaryDark,
     error = ErrorDark,
     onError = Color.White,
 )
 
 /**
- * Тема приложения NextRank.
+ * Тема приложения CyberGym.
  * Material 3 с кастомной цветовой палитрой в стиле CS2.
  */
 @Composable
-fun NextRankTheme(
+fun CyberGymTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {

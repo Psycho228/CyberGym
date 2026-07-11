@@ -4,7 +4,7 @@ import android.app.Application
 import com.nextrank.app.di.SupabaseConfig
 import com.nextrank.app.di.initKoin
 
-class NextRankApp : Application() {
+class CyberGymApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
