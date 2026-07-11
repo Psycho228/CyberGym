@@ -21,7 +21,7 @@ class OnboardingViewModel(
 
     val nickname: String get() = _uiState.value.nickname
     val selectedRank: Cs2Rank? get() = _uiState.value.selectedRank
-    val selectedGoal: PlayerGoal? get() = _uiState.value.selectedGoal
+    val selectedGoals: Set<PlayerGoal> get() = _uiState.value.selectedGoals
 
     fun onNicknameChange(value: String) {
         _uiState.update { it.copy(nickname = value) }
@@ -31,8 +31,14 @@ class OnboardingViewModel(
         _uiState.update { it.copy(selectedRank = rank) }
     }
 
-    fun onGoalSelect(goal: PlayerGoal?) {
-        _uiState.update { it.copy(selectedGoal = goal) }
+    fun onGoalToggle(goal: PlayerGoal) {
+        val current = _uiState.value.selectedGoals
+        val updated = if (goal in current) {
+            current - goal
+        } else {
+            current + goal
+        }
+        _uiState.update { it.copy(selectedGoals = updated) }
     }
 
     fun onComplete() {
@@ -44,7 +50,7 @@ class OnboardingViewModel(
             when (val result = onboardingRepository.saveProfile(
                 nickname = state.nickname,
                 rank = state.selectedRank,
-                goal = state.selectedGoal,
+                goals = state.selectedGoals.toList(),
                 dailyMinutes = state.dailyMinutes,
             )) {
                 is Result.Success -> _uiState.update {

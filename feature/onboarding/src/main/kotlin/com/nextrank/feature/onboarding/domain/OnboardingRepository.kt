@@ -8,7 +8,7 @@ interface OnboardingRepository {
     suspend fun saveProfile(
         nickname: String,
         rank: Cs2Rank?,
-        goal: PlayerGoal?,
+        goals: List<PlayerGoal>,
         dailyMinutes: Int,
     ): Result<Unit>
 }

@@ -23,7 +23,7 @@ class SupabaseOnboardingRepository(
     override suspend fun saveProfile(
         nickname: String,
         rank: Cs2Rank?,
-        goal: PlayerGoal?,
+        goals: List<PlayerGoal>,
         dailyMinutes: Int,
     ): Result<Unit> = runCatching {
         val userId = supabaseClient.auth.currentUserOrNull()?.id
@@ -33,7 +33,7 @@ class SupabaseOnboardingRepository(
             OnboardingProfileUpdate(
                 nickname = nickname.trim(),
                 currentRank = rank?.name?.lowercase(),
-                primaryGoal = goal?.databaseValue(),
+                primaryGoals = goals.map(PlayerGoal::databaseValue),
                 dailyMinutes = dailyMinutes,
                 onboardingCompleted = true,
             ),
@@ -52,8 +52,8 @@ private data class OnboardingProfileUpdate(
     val nickname: String,
     @SerialName("current_rank")
     val currentRank: String?,
-    @SerialName("primary_goal")
-    val primaryGoal: String?,
+    @SerialName("primary_goals")
+    val primaryGoals: List<String>,
     @SerialName("daily_minutes")
     val dailyMinutes: Int,
     @SerialName("onboarding_completed")

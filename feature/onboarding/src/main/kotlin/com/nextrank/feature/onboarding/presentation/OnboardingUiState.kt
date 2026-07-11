@@ -8,7 +8,7 @@ import com.nextrank.domain.model.PlayerGoal
 data class OnboardingUiState(
     val nickname: String = "",
     val selectedRank: Cs2Rank? = null,
-    val selectedGoal: PlayerGoal? = null,
+    val selectedGoals: Set<PlayerGoal> = emptySet(),
     val dailyMinutes: Int = 15,
     val isSaving: Boolean = false,
     val errorMessage: String? = null,

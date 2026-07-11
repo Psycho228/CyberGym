@@ -20,6 +20,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -72,10 +74,10 @@ fun OnboardingScreen(
         currentPage = currentPage,
         nickname = uiState.nickname,
         selectedRank = uiState.selectedRank,
-        selectedGoal = uiState.selectedGoal,
+        selectedGoals = uiState.selectedGoals,
         onNicknameChange = viewModel::onNicknameChange,
         onRankSelect = viewModel::onRankSelect,
-        onGoalSelect = viewModel::onGoalSelect,
+        onGoalToggle = viewModel::onGoalToggle,
         onNext = {
             if (currentPage < 2) {
                 currentPage += 1
@@ -98,10 +100,10 @@ private fun OnboardingContent(
     currentPage: Int,
     nickname: String,
     selectedRank: Cs2Rank?,
-    selectedGoal: PlayerGoal?,
+    selectedGoals: Set<PlayerGoal>,
     onNicknameChange: (String) -> Unit,
     onRankSelect: (Cs2Rank?) -> Unit,
-    onGoalSelect: (PlayerGoal?) -> Unit,
+    onGoalToggle: (PlayerGoal) -> Unit,
     onNext: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
@@ -170,8 +172,8 @@ private fun OnboardingContent(
                 onRankSelect = onRankSelect,
             )
             2 -> GoalStep(
-                selectedGoal = selectedGoal,
-                onGoalSelect = onGoalSelect,
+                selectedGoals = selectedGoals,
+                onGoalToggle = onGoalToggle,
             )
         }
 
@@ -456,8 +458,8 @@ private fun RankCard(
 
 @Composable
 private fun GoalStep(
-    selectedGoal: PlayerGoal?,
-    onGoalSelect: (PlayerGoal?) -> Unit,
+    selectedGoals: Set<PlayerGoal>,
+    onGoalToggle: (PlayerGoal) -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -492,12 +494,12 @@ private fun GoalStep(
             )
         }
 
-        // Goal cards
+        // Goal cards with checkboxes
         PlayerGoal.values().forEach { goal ->
             GoalCard(
                 goal = goal,
-                isSelected = goal == selectedGoal,
-                onSelect = { onGoalSelect(goal) },
+                isSelected = goal in selectedGoals,
+                onToggle = { onGoalToggle(goal) },
             )
         }
     }
@@ -507,7 +509,7 @@ private fun GoalStep(
 private fun GoalCard(
     goal: PlayerGoal,
     isSelected: Boolean,
-    onSelect: () -> Unit,
+    onToggle: () -> Unit,
 ) {
     val borderColor = if (isSelected) {
         Color(0xFF6C63FF)
@@ -535,8 +537,8 @@ private fun GoalCard(
             .fillMaxWidth()
             .selectable(
                 selected = isSelected,
-                role = Role.RadioButton,
-                onClick = onSelect,
+                role = Role.Checkbox,
+                onClick = onToggle,
             )
             .shadow(
                 elevation = if (isSelected) 12.dp else 4.dp,
@@ -552,12 +554,12 @@ private fun GoalCard(
         RowWithSpacing(
             horizontalSpace = 16.dp,
         ) {
-            RadioButton(
-                selected = isSelected,
-                onClick = onSelect,
-                colors = androidx.compose.material3.RadioButtonDefaults.colors(
-                    selectedColor = Color(0xFF6C63FF),
-                    unselectedColor = Color(0xFF6B6B8D),
+            Checkbox(
+                checked = isSelected,
+                onCheckedChange = { onToggle() },
+                colors = CheckboxDefaults.colors(
+                    checkedColor = Color(0xFF6C63FF),
+                    uncheckedColor = Color(0xFF6B6B8D),
                 ),
             )
             Column(
