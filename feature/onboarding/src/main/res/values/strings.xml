@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="onboarding_title">Настройка профиля</string>
+    <string name="onboarding_next">Далее</string>
+    <string name="onboarding_back">Назад</string>
+    <string name="onboarding_finish">Завершить</string>
+    <string name="onboarding_step_nickname">Как к вам обращаться?</string>
+    <string name="onboarding_step_nickname_desc">Введите ваш никнейм</string>
+    <string name="nickname_label">Никнейм</string>
+    <string name="nickname_placeholder">YourNick</string>
+    <string name="onboarding_step_rank">Ваш текущий ранг</string>
+    <string name="onboarding_step_rank_desc">Выберите ваш ранг в CS2</string>
+    <string name="onboarding_step_goal">Ваша главная цель</string>
+    <string name="onboarding_step_goal_desc">Что вы хотите улучшить?</string>
+</resources>

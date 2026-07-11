@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NextRank</string>
+    <string name="login_title">Вход</string>
+    <string name="login_subtitle">Войдите в свой аккаунт</string>
+    <string name="email_label">Email</string>
+    <string name="email_placeholder">player@example.com</string>
+    <string name="password_label">Пароль</string>
+    <string name="password_placeholder">Введите пароль</string>
+    <string name="login_button">Войти</string>
+    <string name="no_account_question">Нет аккаунта? Зарегистрироваться</string>
+    <string name="register_title">Регистрация</string>
+    <string name="register_subtitle">Создайте аккаунт для начала тренировок</string>
+    <string name="register_button">Создать аккаунт</string>
+    <string name="has_account_question">Уже есть аккаунт? Войти</string>
+</resources>

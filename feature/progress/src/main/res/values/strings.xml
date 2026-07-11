@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="progress_title">Прогресс</string>
+    <string name="progress_level">Уровень</string>
+    <string name="progress_total_xp">Всего XP</string>
+    <string name="progress_current_streak">Текущая серия</string>
+    <string name="progress_longest_streak">Лучшая серия</string>
+    <string name="progress_total_trainings">Тренировок</string>
+    <string name="progress_achievements">Достижения</string>
+    <string name="progress_recent_sessions">Последние тренировки</string>
+    <string name="progress_no_sessions">Нет завершённых тренировок</string>
+    <string name="progress_xp_awarded">+%d XP</string>
+</resources>

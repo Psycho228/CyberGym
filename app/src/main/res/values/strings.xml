@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NextRank</string>
+
+    <!-- Auth -->
+    <string name="login_title">Вход</string>
+    <string name="login_subtitle">Войдите в свой аккаунт</string>
+    <string name="email_label">Email</string>
+    <string name="email_placeholder">player@example.com</string>
+    <string name="password_label">Пароль</string>
+    <string name="password_placeholder">Введите пароль</string>
+    <string name="login_button">Войти</string>
+    <string name="no_account_question">Нет аккаунта? Зарегистрироваться</string>
+
+    <!-- Register -->
+    <string name="register_title">Регистрация</string>
+    <string name="register_subtitle">Создайте аккаунт для начала тренировок</string>
+    <string name="register_button">Создать аккаунт</string>
+    <string name="has_account_question">Уже есть аккаунт? Войти</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_title">Настройка профиля</string>
+    <string name="onboarding_next">Далее</string>
+    <string name="onboarding_back">Назад</string>
+    <string name="onboarding_finish">Завершить</string>
+    <string name="onboarding_step_nickname">Как к вам обращаться?</string>
+    <string name="onboarding_step_nickname_desc">Введите ваш никнейм</string>
+    <string name="nickname_label">Никнейм</string>
+    <string name="nickname_placeholder">YourNick</string>
+    <string name="onboarding_step_rank">Ваш текущий ранг</string>
+    <string name="onboarding_step_rank_desc">Выберите ваш ранг в CS2</string>
+    <string name="onboarding_step_goal">Ваша главная цель</string>
+    <string name="onboarding_step_goal_desc">Что вы хотите улучшить?</string>
+
+    <!-- Home -->
+    <string name="home_welcome">Привет, %s!</string>
+    <string name="home_level">Уровень</string>
+    <string name="home_xp">XP</string>
+    <string name="home_streak">Streak</string>
+    <string name="home_daily_plan">Тренировка дня</string>
+    <string name="home_daily_plan_desc">%d упражнений • ~%d мин</string>
+    <string name="home_start">Начать</string>
+    <string name="home_progress">Прогресс</string>
+    <string name="home_profile">Профиль</string>
+    <string name="home_logout">Выйти</string>
+</resources>

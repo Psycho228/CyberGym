@@ -1,0 +1,48 @@
+nextrank/
+├── app/
+│   └── src/main/kotlin/com/nextrank/app/
+│       ├── NextRankApp.kt
+│       ├── MainActivity.kt
+│       └── AppNavigation.kt
+├── core/
+│   ├── common/
+│   │   ├── result/
+│   │   ├── error/
+│   │   ├── coroutine/
+│   │   └── time/
+│   ├── designsystem/
+│   │   ├── component/
+│   │   ├── icon/
+│   │   ├── theme/
+│   │   └── typography/
+│   ├── navigation/
+│   ├── network/
+│   │   ├── supabase/
+│   │   ├── dto/
+│   │   └── mapper/
+│   └── analytics/
+├── feature/
+│   ├── auth/
+│   │   ├── data/
+│   │   ├── domain/
+│   │   └── presentation/
+│   ├── onboarding/
+│   ├── home/
+│   ├── training/
+│   ├── progress/
+│   └── profile/
+├── supabase/
+│   ├── migrations/
+│   ├── functions/
+│   ├── seed.sql
+│   └── tests/
+├── docs/
+│   ├── PRD.md
+│   ├── TDD.md
+│   ├── DATABASE.md
+│   ├── ANALYTICS.md
+│   └── ADR/
+├── AGENTS.md
+├── README.md
+└── gradle/
+    └── libs.versions.toml

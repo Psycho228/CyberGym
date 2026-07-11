@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="training_title">Упражнения</string>
+    <string name="training_minutes_format">%d мин</string>
+    <string name="training_xp_format">%d XP</string>
+    <string name="training_no_exercises">Упражнения не найдены</string>
+</resources>

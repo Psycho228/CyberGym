@@ -1,0 +1,63 @@
+build:
+  maxIssues: 0
+  excludeCorrectable: false
+
+config:
+  validation: true
+  warningsAsErrors: false
+
+complexity:
+  active: true
+  LongMethod:
+    active: true
+    threshold: 150
+  LongParameterList:
+    active: true
+    functionThreshold: 8
+    constructorThreshold: 8
+  CyclomaticComplexMethod:
+    active: true
+    threshold: 20
+  TooManyFunctions:
+    active: false
+  LargeClass:
+    active: true
+    threshold: 200
+
+style:
+  active: true
+  ReturnCount:
+    active: false
+  MagicNumber:
+    active: false
+  WildcardImport:
+    active: false
+  MaxLineLength:
+    active: true
+    maxLineLength: 140
+  ForbiddenComment:
+    active: true
+    values: ['STOPSHIP']
+  UnusedPrivateMember:
+    active: true
+
+empty-blocks:
+  active: true
+  EmptyFunctionBlock:
+    active: false
+
+exceptions:
+  active: true
+  SwallowedException:
+    active: false
+
+naming:
+  active: true
+  FunctionNaming:
+    active: false
+  VariableNaming:
+    active: true
+    variablePattern: '([a-z][a-zA-Z0-9]*)|(`.*`)'
+
+potential-bugs:
+  active: true

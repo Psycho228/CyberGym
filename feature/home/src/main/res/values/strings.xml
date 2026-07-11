@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_welcome">Привет, %s!</string>
+    <string name="home_level">Уровень</string>
+    <string name="home_xp">XP</string>
+    <string name="home_streak">Streak</string>
+    <string name="home_daily_plan">Тренировка дня</string>
+    <string name="home_daily_plan_desc">%d упражнений • ~%d мин</string>
+    <string name="home_start">Начать</string>
+    <string name="home_progress">Прогресс</string>
+    <string name="home_profile">Профиль</string>
+    <string name="home_logout">Выйти</string>
+</resources>
