@@ -203,13 +203,18 @@ private fun OnboardingContent(
                     modifier = Modifier
                         .fillMaxSize()
                         .background(
-                            Brush.horizontalGradient(
-                                colors = if (uiState.isSaving) {
-                                    listOf(Color(0xFF6C63FF).copy(alpha = 0.5f))
-                                } else {
-                                    listOf(Color(0xFF6C63FF), Color(0xFF8B83FF))
-                                },
-                            ),
+                            if (uiState.isSaving) {
+                                Brush.linearGradient(
+                                    colors = listOf(
+                                        Color(0xFF6C63FF).copy(alpha = 0.5f),
+                                        Color(0xFF6C63FF).copy(alpha = 0.5f),
+                                    ),
+                                )
+                            } else {
+                                Brush.horizontalGradient(
+                                    colors = listOf(Color(0xFF6C63FF), Color(0xFF8B83FF)),
+                                )
+                            },
                             RoundedCornerShape(16.dp),
                         ),
                     contentAlignment = Alignment.Center,
