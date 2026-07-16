@@ -12,6 +12,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.UUID
 
+private const val ERROR_DETAILS_MAX_LENGTH = 220
+
 @Immutable
 data class TrainingSessionUiState(
     val isLoading: Boolean = true,
@@ -71,18 +73,21 @@ class TrainingSessionViewModel(private val repository: TrainingRepository) : Vie
                 is Result.Failure -> _uiState.update {
                     it.copy(
                         isCompleting = false,
-                        errorMessage = buildString {
-                            append("Не удалось завершить тренировку.")
-                            result.error.message
-                                ?.takeIf { message -> message.isNotBlank() }
-                                ?.let { message ->
-                                    append(" Причина: ")
-                                    append(message.take(220))
-                                }
-                        },
+                        errorMessage = buildCompleteErrorMessage(result),
                     )
                 }
             }
         }
     }
+
+    private fun buildCompleteErrorMessage(result: Result.Failure): String =
+        buildString {
+            append("Не удалось завершить тренировку.")
+            result.error.message
+                ?.takeIf { message -> message.isNotBlank() }
+                ?.let { message ->
+                    append(" Причина: ")
+                    append(message.take(ERROR_DETAILS_MAX_LENGTH))
+                }
+        }
 }

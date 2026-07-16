@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber")
+
 package com.nextrank.core.designsystem.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -6,8 +8,6 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-
-// --- Colors ---
 
 val PrimaryLight = Color(0xFF00E5FF)
 val PrimaryDark = Color(0xFF00E5FF)
@@ -36,8 +36,6 @@ val ErrorLight = Color(0xFFE74C3C)
 val ErrorDark = Color(0xFFC0392B)
 val WarningLight = Color(0xFFF39C12)
 val WarningDark = Color(0xFFE67E22)
-
-// --- Color Schemes ---
 
 private val LightColorScheme = lightColorScheme(
     primary = PrimaryLight,
@@ -70,8 +68,9 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 /**
- * Тема приложения CyberGym.
- * Material 3 с кастомной цветовой палитрой в стиле CS2.
+ * CyberGym app theme.
+ *
+ * Material 3 with a neon gaming palette.
  */
 @Composable
 fun CyberGymTheme(

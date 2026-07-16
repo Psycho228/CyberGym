@@ -22,33 +22,11 @@ class SupabaseProgressRepository(
         val userId = supabaseClient.auth.currentUserOrNull()?.id
             ?: error("Пользователь не авторизован")
 
-        val profile = supabaseClient.from("profiles")
-            .select { filter { eq("id", userId) } }
-            .decodeSingle<ProfileStatsDto>()
-
-        val achievements = supabaseClient.from("achievements")
-            .select { filter { eq("is_active", true) } }
-            .decodeList<AchievementDto>()
-
-        val unlocked = supabaseClient.from("user_achievements")
-            .select { filter { eq("user_id", userId) } }
-            .decodeList<UserAchievementDto>()
-        val unlockedIds = unlocked.map { it.achievementId }.toSet()
-
-        val sessions = supabaseClient.from("training_sessions")
-            .select {
-                filter { eq("user_id", userId); eq("status", "completed") }
-                order("completed_at", Order.DESCENDING)
-                limit(10)
-            }
-            .decodeList<SessionDto>()
-        val practiceSessions = supabaseClient.from("practice_sessions")
-            .select {
-                filter { eq("user_id", userId); eq("status", "completed") }
-                order("completed_at", Order.DESCENDING)
-                limit(10)
-            }
-            .decodeList<SessionDto>()
+        val profile = loadProfile(userId)
+        val achievements = loadAchievements()
+        val unlockedIds = loadUnlockedAchievementIds(userId)
+        val sessions = loadCompletedSessions("training_sessions", userId)
+        val practiceSessions = loadCompletedSessions("practice_sessions", userId)
         val recentSessions = (sessions + practiceSessions)
             .sortedByDescending { it.completedAt.orEmpty() }
             .take(10)
@@ -79,6 +57,38 @@ class SupabaseProgressRepository(
             },
         )
     }.fold({ Result.Success(it) }, { Result.Failure(it.toAppError()) })
+
+    private suspend fun loadProfile(userId: String): ProfileStatsDto =
+        supabaseClient.from("profiles")
+            .select { filter { eq("id", userId) } }
+            .decodeSingle()
+
+    private suspend fun loadAchievements(): List<AchievementDto> =
+        supabaseClient.from("achievements")
+            .select { filter { eq("is_active", true) } }
+            .decodeList()
+
+    private suspend fun loadUnlockedAchievementIds(userId: String): Set<String> =
+        supabaseClient.from("user_achievements")
+            .select { filter { eq("user_id", userId) } }
+            .decodeList<UserAchievementDto>()
+            .map { it.achievementId }
+            .toSet()
+
+    private suspend fun loadCompletedSessions(
+        table: String,
+        userId: String,
+    ): List<SessionDto> =
+        supabaseClient.from(table)
+            .select {
+                filter {
+                    eq("user_id", userId)
+                    eq("status", "completed")
+                }
+                order("completed_at", Order.DESCENDING)
+                limit(10)
+            }
+            .decodeList()
 }
 
 @Serializable

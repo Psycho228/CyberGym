@@ -1,14 +1,8 @@
 package com.nextrank.feature.onboarding.domain
 
 import com.nextrank.core.common.result.Result
-import com.nextrank.domain.model.Cs2Rank
-import com.nextrank.domain.model.PlayerGoal
+import com.nextrank.feature.onboarding.presentation.OnboardingUiState
 
 interface OnboardingRepository {
-    suspend fun saveProfile(
-        nickname: String,
-        rank: Cs2Rank?,
-        goals: List<PlayerGoal>,
-        dailyMinutes: Int,
-    ): Result<Unit>
+    suspend fun saveProfile(state: OnboardingUiState): Result<Unit>
 }

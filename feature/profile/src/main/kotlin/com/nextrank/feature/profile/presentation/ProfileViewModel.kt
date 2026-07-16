@@ -4,7 +4,8 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nextrank.core.common.result.Result
-import com.nextrank.feature.profile.domain.ProfileData
+import com.nextrank.feature.profile.domain.FaceitProfileStats
+import com.nextrank.feature.profile.domain.FaceitStatsRepository
 import com.nextrank.feature.profile.domain.ProfileRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,11 +24,18 @@ data class ProfileUiState(
     val totalXp: Long = 0,
     val currentStreak: Int = 0,
     val longestStreak: Int = 0,
+    val faceit: FaceitProfileStats? = null,
+    val favoriteMaps: List<String> = emptyList(),
+    val weakSpots: List<String> = emptyList(),
+    val trainingFrequencyDays: Int? = null,
+    val isFaceitStatsRefreshing: Boolean = false,
+    val faceitStatsError: String? = null,
     val errorMessage: String? = null,
 )
 
 class ProfileViewModel(
     private val profileRepository: ProfileRepository,
+    private val faceitStatsRepository: FaceitStatsRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileUiState())
@@ -54,6 +62,11 @@ class ProfileViewModel(
                             totalXp = data.totalXp,
                             currentStreak = data.currentStreak,
                             longestStreak = data.longestStreak,
+                            faceit = data.faceit,
+                            favoriteMaps = data.favoriteMaps,
+                            weakSpots = data.weakSpots,
+                            trainingFrequencyDays = data.trainingFrequencyDays,
+                            faceitStatsError = null,
                         )
                     }
                 }
@@ -63,4 +76,43 @@ class ProfileViewModel(
             }
         }
     }
+
+    fun refreshFaceitStats() {
+        val currentFaceit = _uiState.value.faceit
+        val playerId = currentFaceit?.playerId
+
+        if (playerId.isNullOrBlank() || _uiState.value.isFaceitStatsRefreshing) return
+
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    isFaceitStatsRefreshing = true,
+                    faceitStatsError = null,
+                )
+            }
+
+            when (val result = faceitStatsRepository.loadStats(playerId)) {
+                is Result.Success -> _uiState.update {
+                    it.copy(
+                        isFaceitStatsRefreshing = false,
+                        faceit = currentFaceit.mergeStats(result.data),
+                    )
+                }
+                is Result.Failure -> _uiState.update {
+                    it.copy(
+                        isFaceitStatsRefreshing = false,
+                        faceitStatsError = "Не удалось обновить FACEIT статистику",
+                    )
+                }
+            }
+        }
+    }
 }
+
+private fun FaceitProfileStats.mergeStats(stats: FaceitProfileStats): FaceitProfileStats =
+    copy(
+        matches = stats.matches ?: matches,
+        winRate = stats.winRate ?: winRate,
+        averageKd = stats.averageKd ?: averageKd,
+        headshots = stats.headshots ?: headshots,
+    )

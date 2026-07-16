@@ -2,6 +2,8 @@ package com.nextrank.feature.profile.presentation
 
 import com.nextrank.core.common.error.AppError
 import com.nextrank.core.common.result.Result
+import com.nextrank.feature.profile.domain.FaceitProfileStats
+import com.nextrank.feature.profile.domain.FaceitStatsRepository
 import com.nextrank.feature.profile.domain.ProfileData
 import com.nextrank.feature.profile.domain.ProfileRepository
 import io.mockk.coEvery
@@ -20,6 +22,7 @@ import kotlin.test.assertTrue
 class ProfileViewModelTest {
 
     private val repository: ProfileRepository = mockk()
+    private val faceitStatsRepository: FaceitStatsRepository = mockk(relaxed = true)
     private val dispatcher = UnconfinedTestDispatcher()
     private val profileData = ProfileData(
         nickname = "ProGamer",
@@ -30,6 +33,19 @@ class ProfileViewModelTest {
         totalXp = 1200,
         currentStreak = 7,
         longestStreak = 10,
+        faceit = FaceitProfileStats(
+            playerId = "faceit-player-id",
+            nickname = "ProGamer",
+            avatar = null,
+            country = "RU",
+            faceitUrl = null,
+            skillLevel = 8,
+            faceitElo = 2100,
+            gamePlayerId = "steam-id",
+        ),
+        favoriteMaps = listOf("MIRAGE", "ANCIENT"),
+        weakSpots = listOf("AIM"),
+        trainingFrequencyDays = 4,
     )
 
     @Before
@@ -46,7 +62,7 @@ class ProfileViewModelTest {
     fun `loadProfile success updates state`() = runTest(dispatcher) {
         coEvery { repository.loadProfile() } returns Result.Success(profileData)
 
-        val viewModel = ProfileViewModel(repository)
+        val viewModel = ProfileViewModel(repository, faceitStatsRepository)
 
         val state = viewModel.uiState.value
         assertEquals(false, state.isLoading)
@@ -55,13 +71,16 @@ class ProfileViewModelTest {
         assertEquals(1200, state.totalXp)
         assertEquals(7, state.currentStreak)
         assertEquals(10, state.longestStreak)
+        assertEquals(2100, state.faceit?.faceitElo)
+        assertEquals(listOf("MIRAGE", "ANCIENT"), state.favoriteMaps)
+        assertEquals(4, state.trainingFrequencyDays)
     }
 
     @Test
     fun `loadProfile failure shows error`() = runTest(dispatcher) {
         coEvery { repository.loadProfile() } returns Result.Failure(AppError.Network(null, null))
 
-        val viewModel = ProfileViewModel(repository)
+        val viewModel = ProfileViewModel(repository, faceitStatsRepository)
 
         val state = viewModel.uiState.value
         assertEquals(false, state.isLoading)

@@ -38,7 +38,7 @@ class TrainingCatalogViewModel(
                     it.copy(isLoading = false, exercises = result.data)
                 }
                 is Result.Failure -> _uiState.update {
-                    it.copy(isLoading = false, errorMessage = "Не удалось загрузить упражнения")
+                    it.copy(isLoading = false, errorMessage = "Не удалось загрузить трек")
                 }
             }
         }

@@ -11,8 +11,31 @@ data class ProfileData(
     val totalXp: Long,
     val currentStreak: Int,
     val longestStreak: Int,
+    val faceit: FaceitProfileStats? = null,
+    val favoriteMaps: List<String> = emptyList(),
+    val weakSpots: List<String> = emptyList(),
+    val trainingFrequencyDays: Int? = null,
+)
+
+data class FaceitProfileStats(
+    val playerId: String?,
+    val nickname: String?,
+    val avatar: String?,
+    val country: String?,
+    val faceitUrl: String?,
+    val skillLevel: Int?,
+    val faceitElo: Int?,
+    val gamePlayerId: String?,
+    val matches: Int? = null,
+    val winRate: String? = null,
+    val averageKd: String? = null,
+    val headshots: String? = null,
 )
 
 interface ProfileRepository {
     suspend fun loadProfile(): Result<ProfileData>
+}
+
+interface FaceitStatsRepository {
+    suspend fun loadStats(playerId: String): Result<FaceitProfileStats>
 }

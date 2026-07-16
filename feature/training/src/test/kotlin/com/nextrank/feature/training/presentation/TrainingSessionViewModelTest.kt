@@ -63,7 +63,6 @@ class TrainingSessionViewModelTest {
 
         val viewModel = TrainingSessionViewModel(repository)
         viewModel.load("plan-1")
-
         viewModel.completeCurrent()
 
         assertEquals(1, viewModel.uiState.value.currentIndex)
@@ -78,9 +77,7 @@ class TrainingSessionViewModelTest {
 
         val viewModel = TrainingSessionViewModel(repository)
         viewModel.load("plan-1")
-
         viewModel.completeCurrent()
-
         viewModel.completeCurrent()
 
         val state = viewModel.uiState.value

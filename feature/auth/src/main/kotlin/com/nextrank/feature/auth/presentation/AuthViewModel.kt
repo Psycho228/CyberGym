@@ -3,6 +3,7 @@ package com.nextrank.feature.auth.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nextrank.core.analytics.Analytics
+import com.nextrank.core.analytics.AnalyticsEvent
 import com.nextrank.core.common.error.AppError
 import com.nextrank.core.common.result.onFailure
 import com.nextrank.core.common.result.onSuccess
@@ -10,14 +11,9 @@ import com.nextrank.feature.auth.domain.AuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/**
- * ViewModel авторизации.
- * Управляет состоянием UI и делегирует бизнес-логику в AuthRepository.
- */
 class AuthViewModel(
     private val authRepository: AuthRepository,
     private val analytics: Analytics,
@@ -47,11 +43,9 @@ class AuthViewModel(
 
         viewModelScope.launch {
             authRepository.login(email, password)
-                .onSuccess {
-                    analytics.track(
-                        com.nextrank.core.analytics.AnalyticsEvent.SimpleEvent("login_completed")
-                    )
-                    analytics.setUserId(it)
+                .onSuccess { userId ->
+                    analytics.track(AnalyticsEvent.SimpleEvent("login_completed"))
+                    analytics.setUserId(userId)
                     _uiState.update { it.copy(isLoading = false, isLoggedIn = true) }
                 }
                 .onFailure { error ->
@@ -83,11 +77,9 @@ class AuthViewModel(
 
         viewModelScope.launch {
             authRepository.register(email, password)
-                .onSuccess {
-                    analytics.track(
-                        com.nextrank.core.analytics.AnalyticsEvent.SimpleEvent("sign_up_completed")
-                    )
-                    analytics.setUserId(it)
+                .onSuccess { userId ->
+                    analytics.track(AnalyticsEvent.SimpleEvent("sign_up_completed"))
+                    analytics.setUserId(userId)
                     _uiState.update { it.copy(isLoading = false, isLoggedIn = true) }
                 }
                 .onFailure { error ->

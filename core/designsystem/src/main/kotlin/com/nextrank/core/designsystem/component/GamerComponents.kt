@@ -1,3 +1,5 @@
+@file:Suppress("FunctionNaming", "MagicNumber")
+
 package com.nextrank.core.designsystem.component
 
 import androidx.compose.foundation.BorderStroke
@@ -227,6 +229,7 @@ fun GamerStatCard(
 }
 
 @Composable
+@Suppress("LongMethod", "LongParameterList")
 fun GamerCircularProgress(
     title: String,
     primaryValue: String,

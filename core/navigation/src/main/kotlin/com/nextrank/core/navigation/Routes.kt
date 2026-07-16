@@ -1,26 +1,20 @@
 package com.nextrank.core.navigation
 
-/**
- * Навигационные маршруты приложения.
- */
 sealed interface Route {
-    object Splash : Route
-    object Login : Route
-    object Register : Route
-    object Onboarding : Route
-    object Home : Route
-    object Training : Route
-    object TrainingSession : Route {
+    data object Splash : Route
+    data object Login : Route
+    data object Register : Route
+    data object Onboarding : Route
+    data object Home : Route
+    data object Training : Route
+    data object TrainingSession : Route {
         fun createRoute(sessionId: String): String = "training_session/$sessionId"
         fun createExerciseRoute(exerciseId: String): String = "training_session/exercise-$exerciseId"
     }
-    object Progress : Route
-    object Profile : Route
+    data object Progress : Route
+    data object Profile : Route
 }
 
-/**
- * Граф навигации.
- */
 object NavGraph {
     const val SPLASH = "splash"
     const val LOGIN = "login"

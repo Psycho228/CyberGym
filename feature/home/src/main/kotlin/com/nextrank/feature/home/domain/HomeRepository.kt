@@ -7,7 +7,7 @@ data class HomeSnapshot(
     val level: Int,
     val totalXp: Long,
     val streak: Int,
-    val planId: String,
+    val planId: String?,
     val exerciseCount: Int,
     val estimatedMinutes: Int,
 )

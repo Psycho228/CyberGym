@@ -5,7 +5,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nextrank.core.common.result.Result
 import com.nextrank.feature.progress.domain.AchievementInfo
-import com.nextrank.feature.progress.domain.ProgressData
 import com.nextrank.feature.progress.domain.ProgressRepository
 import com.nextrank.feature.progress.domain.SessionHistoryItem
 import kotlinx.coroutines.flow.MutableStateFlow

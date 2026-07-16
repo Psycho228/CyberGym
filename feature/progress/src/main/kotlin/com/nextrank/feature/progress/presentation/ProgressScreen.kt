@@ -1,3 +1,5 @@
+@file:Suppress("FunctionNaming", "MagicNumber")
+
 package com.nextrank.feature.progress.presentation
 
 import androidx.compose.foundation.layout.Arrangement
@@ -7,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.nextrank.core.designsystem.component.GamerAccentLime
 import com.nextrank.core.designsystem.component.GamerAccentOrange
+import com.nextrank.core.designsystem.component.GamerAccentPink
 import com.nextrank.core.designsystem.component.GamerChip
 import com.nextrank.core.designsystem.component.GamerCircularProgress
 import com.nextrank.core.designsystem.component.GamerHeader
@@ -47,7 +51,7 @@ fun ProgressScreen(
         ) {
             GamerHeader(
                 title = stringResource(R.string.progress_title),
-                subtitle = "Уровень, XP, серии и история тренировок в одном боевом журнале.",
+                subtitle = "Регулярность, навыки, рейтинг и достижения в одном журнале без лишних дублей.",
             )
 
             when {
@@ -58,9 +62,12 @@ fun ProgressScreen(
                 }
                 else -> {
                     LevelCycleProgress(uiState)
-                    StatsGrid(uiState)
+                    OverallProgress(uiState)
+                    SkillsSection(uiState)
+                    RatingSection()
                     AchievementsSection(uiState.achievements)
                     RecentSessionsSection(uiState.recentSessions)
+                    GamerSecondaryButton(text = "Открыть недельный отчёт", onClick = {})
                     GamerSecondaryButton(text = "Назад", onClick = onBack)
                 }
             }
@@ -79,7 +86,7 @@ private fun LevelCycleProgress(state: ProgressUiState) {
     val xpLeft = (nextLevelXp - state.totalXp).coerceAtLeast(0)
 
     GamerCircularProgress(
-        title = "Цикл уровня",
+        title = "Общий прогресс",
         primaryValue = "LVL ${state.level}",
         subtitle = "$xpLeft XP до следующего уровня",
         progress = progress,
@@ -91,11 +98,16 @@ private fun LevelCycleProgress(state: ProgressUiState) {
 }
 
 @Composable
-private fun StatsGrid(state: ProgressUiState) {
+private fun OverallProgress(state: ProgressUiState) {
+    Text(
+        text = "Общий прогресс",
+        style = MaterialTheme.typography.titleLarge,
+        fontWeight = FontWeight.ExtraBold,
+    )
     GamerStatRow {
         GamerStatCard(
-            label = stringResource(R.string.progress_level),
-            value = "${state.level}",
+            label = stringResource(R.string.progress_total_trainings),
+            value = "${state.totalTrainings}",
             accent = GamerAccentLime,
             modifier = Modifier.weight(1f),
         )
@@ -118,11 +130,66 @@ private fun StatsGrid(state: ProgressUiState) {
             modifier = Modifier.weight(1f),
         )
     }
-    GamerStatCard(
-        label = stringResource(R.string.progress_total_trainings),
-        value = "${state.totalTrainings}",
-        modifier = Modifier.fillMaxWidth(),
+}
+
+@Composable
+private fun SkillsSection(state: ProgressUiState) {
+    Text(
+        text = "Навыки",
+        style = MaterialTheme.typography.titleLarge,
+        fontWeight = FontWeight.ExtraBold,
     )
+    val skillRows = listOf(
+        SkillRowData("Aim", "развивается", (state.totalTrainings * 0.12f).coerceIn(0.18f, 0.82f), GamerAccentLime),
+        SkillRowData("Movement", "стабильно", (state.currentStreak * 0.14f).coerceIn(0.16f, 0.74f), GamerAccentOrange),
+        SkillRowData("Game sense", "требует внимания", 0.34f, GamerAccentPink),
+    )
+    GamerPanel {
+        skillRows.forEach { row ->
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(row.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    GamerChip(text = row.status, accent = row.accent)
+                }
+                LinearProgressIndicator(
+                    progress = { row.progress },
+                    modifier = Modifier.fillMaxWidth(),
+                    color = row.accent,
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun RatingSection() {
+    Text(
+        text = "Рейтинг",
+        style = MaterialTheme.typography.titleLarge,
+        fontWeight = FontWeight.ExtraBold,
+    )
+    GamerPanel(accent = GamerAccentOrange) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text("FACEIT / Premier", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(
+                    text = "Рейтинг — шумная метрика. Главный сигнал MVP: регулярность и контроль навыков.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            GamerChip(text = "скоро")
+        }
+    }
 }
 
 @Composable
@@ -193,3 +260,10 @@ private fun RecentSessionsSection(sessions: List<SessionHistoryItem>) {
         }
     }
 }
+
+private data class SkillRowData(
+    val name: String,
+    val status: String,
+    val progress: Float,
+    val accent: androidx.compose.ui.graphics.Color,
+)

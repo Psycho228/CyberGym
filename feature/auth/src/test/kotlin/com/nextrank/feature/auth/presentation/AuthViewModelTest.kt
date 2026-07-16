@@ -1,10 +1,9 @@
 package com.nextrank.feature.auth.presentation
 
-import app.cash.turbine.test
-import com.nextrank.core.common.error.AppError
-import com.nextrank.core.common.result.Result
 import com.nextrank.core.analytics.Analytics
 import com.nextrank.core.analytics.AnalyticsNoOp
+import com.nextrank.core.common.error.AppError
+import com.nextrank.core.common.result.Result
 import com.nextrank.feature.auth.domain.AuthRepository
 import io.mockk.coEvery
 import io.mockk.mockk
