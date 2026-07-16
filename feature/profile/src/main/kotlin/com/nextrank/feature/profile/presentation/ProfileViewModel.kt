@@ -92,11 +92,20 @@ class ProfileViewModel(
             }
 
             when (val result = faceitStatsRepository.loadStats(playerId)) {
-                is Result.Success -> _uiState.update {
-                    it.copy(
-                        isFaceitStatsRefreshing = false,
-                        faceit = currentFaceit.mergeStats(result.data),
-                    )
+                is Result.Success -> {
+                    val mergedStats = currentFaceit.mergeStats(result.data)
+                    val saveResult = profileRepository.saveFaceitStats(mergedStats)
+
+                    _uiState.update {
+                        it.copy(
+                            isFaceitStatsRefreshing = false,
+                            faceit = mergedStats,
+                            faceitStatsError = when (saveResult) {
+                                is Result.Success -> null
+                                is Result.Failure -> "FACEIT статистика обновлена, но не сохранена в БД"
+                            },
+                        )
+                    }
                 }
                 is Result.Failure -> _uiState.update {
                     it.copy(

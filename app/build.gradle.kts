@@ -47,11 +47,6 @@ android {
             "SUPABASE_ANON_KEY",
             "\"${configurationProperty("supabase_anon_key", "placeholder-key")}\"",
         )
-        buildConfigField(
-            "String",
-            "FACEIT_API_KEY",
-            "\"${configurationProperty("faceit_api_key", "")}\"",
-        )
     }
 
     buildTypes {

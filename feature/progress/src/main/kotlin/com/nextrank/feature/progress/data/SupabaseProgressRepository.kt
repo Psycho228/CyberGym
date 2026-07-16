@@ -10,6 +10,7 @@ import com.nextrank.feature.progress.domain.SessionHistoryItem
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Order
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -25,6 +26,7 @@ class SupabaseProgressRepository(
         val profile = loadProfile(userId)
         val achievements = loadAchievements()
         val unlockedIds = loadUnlockedAchievementIds(userId)
+        val totals = loadProgressTotals()
         val sessions = loadCompletedSessions("training_sessions", userId)
         val practiceSessions = loadCompletedSessions("practice_sessions", userId)
         val recentSessions = (sessions + practiceSessions)
@@ -37,7 +39,7 @@ class SupabaseProgressRepository(
                 totalXp = profile.totalXp,
                 currentStreak = profile.currentStreak,
                 longestStreak = profile.longestStreak,
-                totalTrainings = sessions.size + practiceSessions.size,
+                totalTrainings = totals.totalTrainings,
             ),
             achievements = achievements.map {
                 AchievementInfo(
@@ -75,6 +77,11 @@ class SupabaseProgressRepository(
             .map { it.achievementId }
             .toSet()
 
+    private suspend fun loadProgressTotals(): ProgressTotalsDto =
+        supabaseClient.postgrest
+            .rpc("get_progress_totals")
+            .decodeSingle()
+
     private suspend fun loadCompletedSessions(
         table: String,
         userId: String,
@@ -111,6 +118,14 @@ private data class AchievementDto(
 @Serializable
 private data class UserAchievementDto(
     @SerialName("achievement_id") val achievementId: String,
+)
+
+@Serializable
+private data class ProgressTotalsDto(
+    @SerialName("total_trainings") val totalTrainings: Int,
+    @SerialName("completed_training_sessions") val completedTrainingSessions: Int,
+    @SerialName("completed_practice_sessions") val completedPracticeSessions: Int,
+    @SerialName("total_awarded_xp") val totalAwardedXp: Long,
 )
 
 @Serializable

@@ -13,11 +13,14 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -62,11 +65,21 @@ fun AppNavigation(
     navController: NavHostController = rememberNavController(),
     startDestination: String = NavGraph.SPLASH,
 ) {
+    val sessionViewModel = koinViewModel<SessionViewModel>()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
+    val sessionState by sessionViewModel.state.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(sessionState.logoutError) {
+        val message = sessionState.logoutError ?: return@LaunchedEffect
+        snackbarHostState.showSnackbar(message)
+        sessionViewModel.consumeLogoutError()
+    }
 
     Scaffold(
         modifier = modifier,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             if (currentRoute in bottomBarRoutes) {
                 CyberGymBottomBar(
@@ -79,6 +92,14 @@ fun AppNavigation(
         CyberGymNavHost(
             navController = navController,
             startDestination = startDestination,
+            onLogout = {
+                sessionViewModel.logout {
+                    navController.navigate(NavGraph.LOGIN) {
+                        popUpTo(0) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
+            },
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
@@ -117,6 +138,7 @@ private fun CyberGymBottomBar(
 private fun CyberGymNavHost(
     navController: NavHostController,
     startDestination: String,
+    onLogout: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     NavHost(
@@ -149,7 +171,7 @@ private fun CyberGymNavHost(
                 onNavigateToTraining = { planId -> navController.navigate(Route.TrainingSession.createRoute(planId)) },
                 onNavigateToProgress = { navController.navigateSingleTop(NavGraph.PROGRESS) },
                 onNavigateToProfile = { navController.navigateSingleTop(NavGraph.PROFILE) },
-                onLogout = { navController.replaceRoute(NavGraph.HOME, NavGraph.LOGIN) },
+                onLogout = onLogout,
             )
         }
         composable(
@@ -177,7 +199,7 @@ private fun CyberGymNavHost(
         composable(NavGraph.PROFILE) {
             ProfileScreen(
                 onBack = { navController.popBackStack() },
-                onLogout = { navController.replaceRoute(NavGraph.PROFILE, NavGraph.LOGIN) },
+                onLogout = onLogout,
             )
         }
     }

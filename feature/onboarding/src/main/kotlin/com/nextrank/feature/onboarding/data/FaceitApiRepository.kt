@@ -2,9 +2,10 @@ package com.nextrank.feature.onboarding.data
 
 import com.nextrank.core.common.error.toAppError
 import com.nextrank.core.common.result.Result
-import com.nextrank.core.network.faceit.FaceitConfig
 import com.nextrank.feature.onboarding.domain.FaceitPlayer
 import com.nextrank.feature.onboarding.domain.FaceitRepository
+import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.auth.auth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
@@ -14,19 +15,17 @@ import java.net.HttpURLConnection
 import java.net.URLEncoder
 import java.net.URL
 
-private const val FACEIT_BASE_URL = "https://open.faceit.com/data/v4"
 private const val CONNECT_TIMEOUT_MILLIS = 10_000
 private const val READ_TIMEOUT_MILLIS = 10_000
 
 class FaceitApiRepository(
-    private val config: FaceitConfig,
+    private val supabaseClient: SupabaseClient,
     private val json: Json = Json { ignoreUnknownKeys = true },
 ) : FaceitRepository {
 
     override suspend fun findPlayer(nickname: String): Result<FaceitPlayer> = runCatching {
-        require(config.apiKey.isNotBlank()) { "FACEIT API key is not configured" }
         val encodedNickname = URLEncoder.encode(nickname.trim(), Charsets.UTF_8.name())
-        val response = get("$FACEIT_BASE_URL/players?nickname=$encodedNickname&game=cs2")
+        val response = get("${supabaseClient.supabaseUrl}/functions/v1/faceit-player?nickname=$encodedNickname")
         val dto = json.decodeFromString<FaceitPlayerDto>(response)
         dto.toDomain()
     }.fold({ Result.Success(it) }, { Result.Failure(it.toAppError()) })
@@ -37,7 +36,10 @@ class FaceitApiRepository(
             connectTimeout = CONNECT_TIMEOUT_MILLIS
             readTimeout = READ_TIMEOUT_MILLIS
             setRequestProperty("Accept", "application/json")
-            setRequestProperty("Authorization", "Bearer ${config.apiKey}")
+            setRequestProperty(
+                "Authorization",
+                "Bearer ${supabaseClient.auth.currentAccessTokenOrNull() ?: error("No active Supabase session")}",
+            )
         }
 
         try {

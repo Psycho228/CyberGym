@@ -1,12 +1,12 @@
 package com.nextrank.app.di
 
 import android.content.Context
+import com.nextrank.app.SessionViewModel
 import com.nextrank.app.StartupViewModel
 import com.nextrank.core.analytics.Analytics
 import com.nextrank.core.analytics.AnalyticsNoOp
 import com.nextrank.core.common.time.Clock
 import com.nextrank.core.common.time.SystemClock
-import com.nextrank.core.network.faceit.FaceitConfig
 import com.nextrank.core.network.supabase.createSupabaseClient
 import com.nextrank.feature.auth.di.authModule
 import com.nextrank.feature.home.di.homeModule
@@ -28,13 +28,13 @@ data class SupabaseConfig(
 val appModule = module {
     single<Clock> { SystemClock() }
     single<Analytics> { AnalyticsNoOp() }
+    viewModel { SessionViewModel(get()) }
     viewModel { StartupViewModel(get(), get()) }
 }
 
 fun initKoin(
     context: Context,
     supabaseConfig: SupabaseConfig,
-    faceitConfig: FaceitConfig,
 ) {
     startKoin {
         androidLogger()
@@ -42,7 +42,6 @@ fun initKoin(
         modules(
             appModule,
             networkModule(supabaseConfig),
-            faceitModule(faceitConfig),
             authModule,
             onboardingModule,
             homeModule,
@@ -55,8 +54,4 @@ fun initKoin(
 
 fun networkModule(config: SupabaseConfig) = module {
     single { createSupabaseClient(config.url, config.anonKey) }
-}
-
-fun faceitModule(config: FaceitConfig) = module {
-    single { config }
 }

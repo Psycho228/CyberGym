@@ -34,6 +34,7 @@ data class FaceitProfileStats(
 
 interface ProfileRepository {
     suspend fun loadProfile(): Result<ProfileData>
+    suspend fun saveFaceitStats(stats: FaceitProfileStats): Result<Unit>
 }
 
 interface FaceitStatsRepository {

@@ -2,9 +2,10 @@ package com.nextrank.feature.profile.data
 
 import com.nextrank.core.common.error.toAppError
 import com.nextrank.core.common.result.Result
-import com.nextrank.core.network.faceit.FaceitConfig
 import com.nextrank.feature.profile.domain.FaceitProfileStats
 import com.nextrank.feature.profile.domain.FaceitStatsRepository
+import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.auth.auth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
@@ -18,21 +19,18 @@ import kotlinx.serialization.json.jsonPrimitive
 import java.net.HttpURLConnection
 import java.net.URL
 
-private const val FACEIT_BASE_URL = "https://open.faceit.com/data/v4"
 private const val CONNECT_TIMEOUT_MILLIS = 10_000
 private const val READ_TIMEOUT_MILLIS = 10_000
-private const val CS2_GAME_ID = "cs2"
 
 class FaceitStatsApiRepository(
-    private val config: FaceitConfig,
+    private val supabaseClient: SupabaseClient,
     private val json: Json = Json { ignoreUnknownKeys = true },
 ) : FaceitStatsRepository {
 
     override suspend fun loadStats(playerId: String): Result<FaceitProfileStats> = runCatching {
-        require(config.apiKey.isNotBlank()) { "FACEIT API key is not configured" }
         require(playerId.isNotBlank()) { "FACEIT player id is empty" }
 
-        val response = get("$FACEIT_BASE_URL/players/$playerId/stats/$CS2_GAME_ID")
+        val response = get("${supabaseClient.supabaseUrl}/functions/v1/faceit-stats?player_id=$playerId")
         val dto = json.decodeFromString<FaceitStatsDto>(response)
         dto.toDomain()
     }.fold({ Result.Success(it) }, { Result.Failure(it.toAppError()) })
@@ -43,7 +41,10 @@ class FaceitStatsApiRepository(
             connectTimeout = CONNECT_TIMEOUT_MILLIS
             readTimeout = READ_TIMEOUT_MILLIS
             setRequestProperty("Accept", "application/json")
-            setRequestProperty("Authorization", "Bearer ${config.apiKey}")
+            setRequestProperty(
+                "Authorization",
+                "Bearer ${supabaseClient.auth.currentAccessTokenOrNull() ?: error("No active Supabase session")}",
+            )
         }
 
         try {
