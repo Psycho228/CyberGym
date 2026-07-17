@@ -30,7 +30,7 @@ class FaceitStatsApiRepository(
     override suspend fun loadStats(playerId: String): Result<FaceitProfileStats> = runCatching {
         require(playerId.isNotBlank()) { "FACEIT player id is empty" }
 
-        val response = get("${supabaseClient.supabaseUrl}/functions/v1/faceit-stats?player_id=$playerId")
+        val response = get("${supabaseClient.functionsBaseUrl()}/faceit-stats?player_id=$playerId")
         val dto = json.decodeFromString<FaceitStatsDto>(response)
         dto.toDomain()
     }.fold({ Result.Success(it) }, { Result.Failure(it.toAppError()) })
@@ -109,3 +109,13 @@ private fun String?.asPercent(): String? =
     this?.let { value ->
         if (value.endsWith("%")) value else "$value%"
     }
+
+private fun SupabaseClient.functionsBaseUrl(): String {
+    val baseUrl = supabaseUrl.trimEnd('/')
+    val normalizedBaseUrl = if (baseUrl.startsWith("http://") || baseUrl.startsWith("https://")) {
+        baseUrl
+    } else {
+        "https://$baseUrl"
+    }
+    return "$normalizedBaseUrl/functions/v1"
+}

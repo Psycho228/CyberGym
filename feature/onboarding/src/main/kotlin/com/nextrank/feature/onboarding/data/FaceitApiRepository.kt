@@ -25,7 +25,7 @@ class FaceitApiRepository(
 
     override suspend fun findPlayer(nickname: String): Result<FaceitPlayer> = runCatching {
         val encodedNickname = URLEncoder.encode(nickname.trim(), Charsets.UTF_8.name())
-        val response = get("${supabaseClient.supabaseUrl}/functions/v1/faceit-player?nickname=$encodedNickname")
+        val response = get("${supabaseClient.functionsBaseUrl()}/faceit-player?nickname=$encodedNickname")
         val dto = json.decodeFromString<FaceitPlayerDto>(response)
         dto.toDomain()
     }.fold({ Result.Success(it) }, { Result.Failure(it.toAppError()) })
@@ -97,4 +97,14 @@ private fun FaceitPlayerDto.toDomain(): FaceitPlayer {
         skillLevel = game?.skillLevel,
         faceitElo = game?.faceitElo,
     )
+}
+
+private fun SupabaseClient.functionsBaseUrl(): String {
+    val baseUrl = supabaseUrl.trimEnd('/')
+    val normalizedBaseUrl = if (baseUrl.startsWith("http://") || baseUrl.startsWith("https://")) {
+        baseUrl
+    } else {
+        "https://$baseUrl"
+    }
+    return "$normalizedBaseUrl/functions/v1"
 }
