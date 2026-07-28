@@ -5,6 +5,7 @@ import com.nextrank.core.common.result.Result
 import com.nextrank.feature.training.domain.TrainingCompletion
 import com.nextrank.feature.training.domain.TrainingExercise
 import com.nextrank.feature.training.domain.TrainingRepository
+import com.nextrank.feature.training.domain.TrainingResultSubmission
 import com.nextrank.feature.training.domain.TrainingSession
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -17,6 +18,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class TrainingSessionViewModelTest {
@@ -27,8 +29,28 @@ class TrainingSessionViewModelTest {
         sessionId = "session-1",
         planTitle = "Ежедневная база",
         exercises = listOf(
-            TrainingExercise("item-1", "ex-1", "Флики", "Разминка", "Делай флики", "timer", 5, 30),
-            TrainingExercise("item-2", "ex-2", "Хедшоты", "Aim", "50 хедшотов", "repetitions", 8, 50),
+            TrainingExercise(
+                "item-1",
+                "ex-1",
+                "warmup_flicks",
+                "Флики",
+                "Разминка",
+                "Делай флики",
+                "timer",
+                5,
+                30,
+            ),
+            TrainingExercise(
+                "item-2",
+                "ex-2",
+                "aim_headshots",
+                "Хедшоты",
+                "Aim",
+                "50 хедшотов",
+                "repetitions",
+                8,
+                50,
+            ),
         ),
     )
 
@@ -69,16 +91,30 @@ class TrainingSessionViewModelTest {
     }
 
     @Test
-    fun `completeCurrent on last exercise completes session`() = runTest(dispatcher) {
+    fun `QR confirmation on last exercise completes session`() = runTest(dispatcher) {
         coEvery { repository.startOrResume("plan-1") } returns Result.Success(session)
         coEvery {
-            repository.complete("session-1", listOf("item-1", "item-2"), any())
+            repository.complete("session-1", any<List<TrainingResultSubmission>>(), any())
         } returns Result.Success(TrainingCompletion(80, 580, 3, 1))
 
         val viewModel = TrainingSessionViewModel(repository)
         viewModel.load("plan-1")
         viewModel.completeCurrent()
-        viewModel.completeCurrent()
+        viewModel.acceptQrCode(
+            """
+            {
+              "v": 1,
+              "source": "cybergym_workshop",
+              "map": "cybergym_training_hub",
+              "run_id": "run-test",
+              "results": [
+                {"exercise":"warmup_flicks","metrics":{"hits":30}},
+                {"exercise":"aim_headshots","metrics":{"hits":50,"accuracy":82.5}}
+              ]
+            }
+            """.trimIndent(),
+        )
+        viewModel.confirmResults()
 
         val state = viewModel.uiState.value
         assertTrue(state.isComplete)
@@ -95,5 +131,20 @@ class TrainingSessionViewModelTest {
         val state = viewModel.uiState.value
         assertEquals(false, state.isLoading)
         assertTrue(state.errorMessage != null)
+    }
+
+    @Test
+    fun `invalid QR keeps custom scanner open`() = runTest(dispatcher) {
+        coEvery { repository.startOrResume("plan-1") } returns Result.Success(session)
+
+        val viewModel = TrainingSessionViewModel(repository)
+        viewModel.load("plan-1")
+        viewModel.beginQrScan()
+
+        val accepted = viewModel.acceptQrCode("""{"v":1,"source":"other","results":[]}""")
+
+        assertFalse(accepted)
+        assertTrue(viewModel.uiState.value.isScanningQr)
+        assertTrue(viewModel.uiState.value.errorMessage != null)
     }
 }

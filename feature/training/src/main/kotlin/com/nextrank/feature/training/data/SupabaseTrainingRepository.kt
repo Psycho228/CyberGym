@@ -7,6 +7,7 @@ import com.nextrank.feature.training.domain.CatalogExercise
 import com.nextrank.feature.training.domain.TrainingCompletion
 import com.nextrank.feature.training.domain.TrainingExercise
 import com.nextrank.feature.training.domain.TrainingRepository
+import com.nextrank.feature.training.domain.TrainingResultSubmission
 import com.nextrank.feature.training.domain.TrainingSession
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
@@ -17,6 +18,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.put
 import java.time.Instant
 
@@ -24,7 +26,7 @@ class SupabaseTrainingRepository(private val client: SupabaseClient) : TrainingR
 
     override suspend fun startExercise(exerciseId: String): Result<TrainingSession> = runCatching {
         val rows = client.postgrest.rpc(
-            "start_or_resume_practice_exercise",
+            "start_or_resume_practice_exercise_v2",
             buildJsonObject { put("p_exercise_id", exerciseId) },
         ).decodeList<TrainingRowDto>()
         require(rows.isNotEmpty()) { "Exercise has no data" }
@@ -36,7 +38,7 @@ class SupabaseTrainingRepository(private val client: SupabaseClient) : TrainingR
 
     override suspend fun startOrResume(planId: String): Result<TrainingSession> = runCatching {
         val rows = client.postgrest.rpc(
-            "start_or_resume_training",
+            "start_or_resume_training_v2",
             buildJsonObject { put("p_plan_id", planId) },
         ).decodeList<TrainingRowDto>()
         require(rows.isNotEmpty()) { "Training plan has no exercises" }
@@ -48,21 +50,25 @@ class SupabaseTrainingRepository(private val client: SupabaseClient) : TrainingR
 
     override suspend fun complete(
         sessionId: String,
-        itemIds: List<String>,
+        results: List<TrainingResultSubmission>,
         idempotencyKey: String,
     ): Result<TrainingCompletion> = runCatching {
         val row = if (sessionId.startsWith(PRACTICE_SESSION_PREFIX)) {
+            val result = requireNotNull(results.singleOrNull()) {
+                "Practice session must contain exactly one result"
+            }
             client.postgrest.rpc(
-                "complete_practice_session",
+                "complete_practice_session_v2",
                 buildJsonObject {
                     put("p_session_id", sessionId.removePrefix(PRACTICE_SESSION_PREFIX))
                     put("p_idempotency_key", idempotencyKey)
                     put("p_client_completed_at", Instant.now().toString())
+                    put("p_result", result.toJson())
                 },
             ).decodeSingle<TrainingCompletionDto>()
         } else {
             client.postgrest.rpc(
-                "complete_training_session",
+                "complete_training_session_v2",
                 buildJsonObject {
                     put("p_session_id", sessionId)
                     put("p_idempotency_key", idempotencyKey)
@@ -70,11 +76,11 @@ class SupabaseTrainingRepository(private val client: SupabaseClient) : TrainingR
                     put(
                         "p_results",
                         buildJsonArray {
-                            itemIds.forEach { itemId ->
+                            results.forEach { result ->
                                 add(
                                     buildJsonObject {
-                                        put("item_id", itemId)
-                                        put("result", buildJsonObject {})
+                                        put("item_id", result.itemId)
+                                        put("result", result.toJson())
                                     },
                                 )
                             }
@@ -85,7 +91,7 @@ class SupabaseTrainingRepository(private val client: SupabaseClient) : TrainingR
         }
         TrainingCompletion(row.awardedXp, row.totalXp.toInt(), row.level, row.streak)
     }.fold({ Result.Success(it) }, { throwable ->
-        Log.e(TAG, "Failed to complete training: sessionId=$sessionId itemIds=$itemIds", throwable)
+        Log.e(TAG, "Failed to complete training: sessionId=$sessionId results=${results.size}", throwable)
         Result.Failure(throwable.toAppError())
     })
 
@@ -121,6 +127,7 @@ class SupabaseTrainingRepository(private val client: SupabaseClient) : TrainingR
                 TrainingExercise(
                     itemId = row.itemId,
                     exerciseId = row.exerciseId,
+                    slug = row.exerciseSlug,
                     title = row.exerciseTitle,
                     description = row.exerciseDescription,
                     instructions = row.instructions,
@@ -131,8 +138,34 @@ class SupabaseTrainingRepository(private val client: SupabaseClient) : TrainingR
             },
         )
 
+    private fun TrainingResultSubmission.toJson() = buildJsonObject {
+        put("source", WORKSHOP_SOURCE)
+        put("exercise", exerciseSlug)
+        put("map_name", mapName)
+        put("run_id", runId)
+        completedAt?.let { put("completed_at", it) }
+        put(
+            "metrics",
+            buildJsonObject {
+                metrics.forEach { (key, value) ->
+                    put(key, value.toJsonPrimitive())
+                }
+            },
+        )
+    }
+
+    private fun String.toJsonPrimitive() =
+        toLongOrNull()?.let(::JsonPrimitive)
+            ?: toDoubleOrNull()?.let(::JsonPrimitive)
+            ?: when (lowercase()) {
+                "true" -> JsonPrimitive(true)
+                "false" -> JsonPrimitive(false)
+                else -> JsonPrimitive(this)
+            }
+
     private companion object {
         const val PRACTICE_SESSION_PREFIX = "practice-"
+        const val WORKSHOP_SOURCE = "cybergym_workshop"
         const val TAG = "CyberGymTraining"
     }
 }
@@ -151,6 +184,7 @@ private data class TrainingRowDto(
     @SerialName("plan_title") val planTitle: String,
     @SerialName("item_id") val itemId: String,
     @SerialName("exercise_id") val exerciseId: String,
+    @SerialName("exercise_slug") val exerciseSlug: String,
     @SerialName("exercise_title") val exerciseTitle: String,
     @SerialName("exercise_description") val exerciseDescription: String,
     val instructions: String,
