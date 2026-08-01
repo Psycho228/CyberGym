@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CyberGym OCR samples</title>
+  <style>
+    :root { color-scheme: dark; font-family: Inter, Arial, sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: #071017; color: #ecf7f3; }
+    header { padding: 20px 24px 12px; }
+    h1 { margin: 0 0 8px; font-size: clamp(24px, 3vw, 40px); }
+    p { margin: 0; color: #a9bbb6; }
+    nav { display: flex; flex-wrap: wrap; gap: 10px; padding: 16px 24px; }
+    button {
+      min-height: 48px; padding: 0 18px; border: 1px solid #3b5550; border-radius: 10px;
+      background: #12232a; color: #f5fffc; font-weight: 800; cursor: pointer;
+    }
+    button:hover, button.active { border-color: #a8ff35; color: #a8ff35; }
+    main { padding: 8px 24px 24px; }
+    .screen {
+      width: 100%; min-height: 60vh; display: grid; place-items: center; overflow: hidden;
+      border: 2px solid #263a3d; border-radius: 16px; background: #050708;
+    }
+    pre {
+      margin: 0; padding: 4vw; color: #fff; background: #050708; font-family: Consolas, Monaco, monospace;
+      font-size: clamp(17px, 2.15vw, 40px); line-height: 1.55; font-weight: 700;
+      letter-spacing: .02em; white-space: pre; text-align: left;
+    }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; padding-top: 16px; }
+    .hint { padding-top: 12px; font-size: 14px; }
+    @media (max-width: 800px) {
+      header, nav, main { padding-left: 12px; padding-right: 12px; }
+      pre { font-size: clamp(11px, 2.6vw, 20px); }
+    }
+    :fullscreen header, :fullscreen nav, :fullscreen .actions, :fullscreen .hint { display: none; }
+    :fullscreen main { padding: 0; height: 100vh; }
+    :fullscreen .screen { height: 100vh; border: 0; border-radius: 0; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>CYBERGYM OCR TEST</h1>
+    <p>Выберите тот же набор упражнений, который открыт в приложении.</p>
+  </header>
+  <nav id="samples"></nav>
+  <main>
+    <section class="screen" id="screen"><pre id="result"></pre></section>
+    <div class="actions">
+      <button id="new-run">Новый RUN</button>
+      <button id="fullscreen">На весь экран</button>
+    </div>
+    <p class="hint">В рамку камеры должны попасть первая строка и END. Не подтверждайте один RUN дважды.</p>
+  </main>
+  <script>
+    const samples = {
+      "Дневной план": `CYBERGYM RESULT V1
+RUN DEMO-DAILY-001
+MAP CYBERGYM_TRAINING_HUB
+EX WARMUP ATT 40 HITS 31 ACC 77.5 SCORE 74
+EX AIM50 ATT 70 HITS 51 HS 46 ACC 72.9 SCORE 78
+EX STRAFE50 ATT 50 STOPS 42 HITS 39 SPEED 19.4 SCORE 83
+END`,
+      "Разминка": `CYBERGYM RESULT V1
+RUN DEMO-WARMUP-001
+MAP CYBERGYM_TRAINING_HUB
+EX WARMUP ATT 40 HITS 34 ACC 85 SCORE 82
+END`,
+      "AIM50": `CYBERGYM RESULT V1
+RUN DEMO-AIM50-001
+MAP CYBERGYM_TRAINING_HUB
+EX AIM50 ATT 70 HITS 55 HS 48 ACC 78.6 SCORE 84
+END`,
+      "SPRAY5": `CYBERGYM RESULT V1
+RUN DEMO-SPRAY5-001
+MAP CYBERGYM_TRAINING_HUB
+EX SPRAY5 ATT 150 HITS 119 ACC 79.3 SCORE 81
+END`,
+      "STRAFE50": `CYBERGYM RESULT V1
+RUN DEMO-STRAFE50-001
+MAP CYBERGYM_TRAINING_HUB
+EX STRAFE50 ATT 50 STOPS 44 HITS 41 SPEED 18.7 SCORE 87
+END`
+    };
+
+    const result = document.querySelector("#result");
+    const buttons = document.querySelector("#samples");
+    let selected = "Дневной план";
+
+    function show(name) {
+      selected = name;
+      result.textContent = samples[name];
+      document.querySelectorAll("nav button").forEach(button => {
+        button.classList.toggle("active", button.textContent === name);
+      });
+    }
+
+    Object.keys(samples).forEach(name => {
+      const button = document.createElement("button");
+      button.textContent = name;
+      button.addEventListener("click", () => show(name));
+      buttons.appendChild(button);
+    });
+
+    document.querySelector("#new-run").addEventListener("click", () => {
+      const id = `DEMO-${Date.now().toString(36).toUpperCase()}`;
+      samples[selected] = samples[selected].replace(/^RUN .+$/m, `RUN ${id}`);
+      show(selected);
+    });
+
+    document.querySelector("#fullscreen").addEventListener("click", () => {
+      document.documentElement.requestFullscreen?.();
+    });
+
+    show(selected);
+  </script>
+</body>
+</html>

@@ -11,7 +11,7 @@ CyberGym — Android-приложение для персональных тре
 - подключение FACEIT и загрузка ELO, уровня, K/D, win rate и другой статистики;
 - персональный ежедневный план и каталог отдельных упражнений;
 - запуск и завершение тренировочных сессий;
-- встроенный QR-сканер CyberGym на CameraX;
+- встроенное распознавание текста результатов на CameraX и ML Kit;
 - просмотр и редактирование результатов Workshop перед сохранением;
 - XP, уровни, серии тренировок и экран прогресса;
 - профиль игрока и сохранение снимка FACEIT-статистики.
@@ -20,13 +20,13 @@ CyberGym — Android-приложение для персональных тре
 
 ```text
 CyberGym → тренировочный план → карта CS2 Workshop
-         → QR-код с результатами → встроенный сканер
+         → текст с результатами → встроенный OCR-сканер
          → проверка показателей → Supabase → XP и прогресс
 ```
 
-После прохождения карты пользователь нажимает «Завершить тренировку». Приложение открывает собственный экран камеры, распознаёт QR-код, показывает метрики и позволяет исправить их. Сессия закрывается только после подтверждения.
+После прохождения карты пользователь нажимает «Завершить тренировку». Приложение открывает собственный экран камеры, распознаёт текстовый блок с итогами, показывает метрики и позволяет исправить их. Сессия закрывается только после подтверждения.
 
-Протокол QR описан в [CyberGym_QR_Result_Protocol.md](workshop/CyberGym_QR_Result_Protocol.md). Готовые тестовые коды и генератор находятся в [workshop/qr_samples](workshop/qr_samples/README.md).
+Формат текста для карты описан в [CyberGym_Text_Result_Protocol.md](workshop/CyberGym_Text_Result_Protocol.md). Готовые экраны для проверки сканера находятся в [workshop/text_samples](workshop/text_samples/README.md). Старый QR-протокол и тестовые коды оставлены только как архив.
 
 ## Технологии
 
@@ -35,7 +35,7 @@ CyberGym → тренировочный план → карта CS2 Workshop
 - Navigation Compose;
 - Koin;
 - Supabase Kotlin SDK, Auth и PostgREST;
-- CameraX и bundled ML Kit Barcode Scanning;
+- CameraX и bundled ML Kit Text Recognition;
 - Kotlin Serialization, Ktor и Coil;
 - JUnit, MockK, Turbine, Detekt и ktlint.
 
@@ -55,13 +55,13 @@ feature/
   auth/                 вход и регистрация
   onboarding/           настройка игрового профиля
   home/                 экран «Сегодня»
-  training/             трек, сессия и QR-результаты
+  training/             трек, сессия и результаты Workshop
   progress/             статистика прогресса
   profile/              профиль и FACEIT
 supabase/
   migrations/           схема, RLS и RPC
   functions/            серверные FACEIT-прокси
-workshop/               документация карты и QR-протокол
+workshop/               документация карты и протокол результатов
 ```
 
 ## Локальный запуск
@@ -72,7 +72,7 @@ workshop/               документация карты и QR-протоко
 - Android SDK 36;
 - устройство или эмулятор с API 28+;
 - доступный проект Supabase;
-- физическое устройство для полноценной проверки камеры и QR-сканера.
+- физическое устройство для полноценной проверки камеры и распознавания текста.
 
 ### Настройка Supabase
 
@@ -133,7 +133,7 @@ SQL-файлы находятся в [supabase/migrations](supabase/migrations) 
 
 - RPC версии `v2` для запуска и завершения тренировок;
 - хранение результатов одиночных упражнений;
-- проверку соответствия QR текущей сессии;
+- проверку соответствия результатов текущей сессии;
 - защиту от повторного использования одного `run_id`.
 
 Для self-hosted Supabase используйте правильный контейнер CyberGym и `ON_ERROR_STOP=1`. Не применяйте миграции к контейнеру другого проекта. Подробная инструкция: [SUPABASE_VPS_DEPLOYMENT.md](SUPABASE_VPS_DEPLOYMENT.md).
@@ -160,9 +160,9 @@ Android-приложение обращается к авторизованны�
 
 После изменения функций убедитесь, что они доступны в роутере self-hosted Edge Runtime, а переменная `FACEIT_API_KEY` видна внутри контейнера Functions.
 
-## QR-сканер
+## Сканер результатов
 
-Приложение использует собственный Compose-интерфейс камеры. CameraX управляет камерой, а bundled ML Kit распознаёт только QR-коды локально. Модель входит в APK и не требует загрузки при первом сканировании.
+Приложение использует собственный Compose-интерфейс камеры. CameraX управляет камерой, а bundled ML Kit Text Recognition распознаёт текст локально. Приложение принимает только полный блок с заголовком `CYBERGYM RESULT V1`, строками упражнений и маркером `END`. Модель входит в APK и не требует загрузки при первом сканировании.
 
 Android запросит разрешение:
 
@@ -180,7 +180,7 @@ android.permission.CAMERA
 - [Спецификация Workshop-карты](workshop/CyberGym_CS2_Workshop_Map_MVP.md)
 - [Mapper guide](workshop/CyberGym_CS2_Mapper_Guide.md)
 - [Зона counter-strafe](workshop/CyberGym_CS2_Strafe_Zone_Guide.md)
-- [QR Result Protocol](workshop/CyberGym_QR_Result_Protocol.md)
+- [Text Result Protocol](workshop/CyberGym_Text_Result_Protocol.md)
 
 ## Безопасность
 

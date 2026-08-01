@@ -1,5 +1,7 @@
 # CyberGym Workshop QR Result Protocol v1
 
+> Архивный документ. Карта больше не должна генерировать QR-код. Актуальный контракт: [CyberGym Text Result Protocol](CyberGym_Text_Result_Protocol.md).
+
 Этот документ фиксирует контракт между картой CS2 Workshop и Android-приложением CyberGym.
 
 ## Пользовательский сценарий

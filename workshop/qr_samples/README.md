@@ -1,5 +1,7 @@
 # Тестовые QR-коды CyberGym
 
+> Архив: эти примеры больше не используются приложением. Актуальный формат описан в [CyberGym Text Result Protocol](../CyberGym_Text_Result_Protocol.md).
+
 Папка `generated` содержит готовые одноразовые результаты:
 
 - `daily_foundation_01`–`05` — полный план из `warmup_flicks`, `aim_headshots` и `counter_strafe`;

@@ -1,22 +1,17 @@
 package com.nextrank.feature.training.domain
 
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.contentOrNull
-import java.util.Base64
-
-const val WORKSHOP_QR_PREFIX = "CYBERGYM1:"
-private const val WORKSHOP_SOURCE = "cybergym_workshop"
-private const val MAX_QR_LENGTH = 16_384
+private const val MAX_TEXT_LENGTH = 8_192
 private const val MAX_RESULTS = 20
 private const val MAX_METRICS_PER_EXERCISE = 30
+private const val MIN_RUN_ID_LENGTH = 4
+private const val MIN_MAP_NAME_LENGTH = 2
+private const val MAX_FIELD_LENGTH = 120
+private const val MIN_EXERCISE_TOKENS = 5
 
-data class WorkshopQrResult(
+data class WorkshopResult(
     val mapName: String,
     val runId: String,
-    val completedAt: String?,
+    val completedAt: String? = null,
     val exercises: List<WorkshopExerciseResult>,
 )
 
@@ -25,87 +20,144 @@ data class WorkshopExerciseResult(
     val metrics: Map<String, String>,
 )
 
-object WorkshopQrParser {
-    private val json = Json {
-        ignoreUnknownKeys = true
-        isLenient = false
-    }
+/**
+ * Parses a deliberately OCR-friendly text block rendered by the Workshop map.
+ * Delimiters (:, = and |) are optional because OCR can lose them.
+ */
+object WorkshopTextParser {
+    fun parse(recognizedText: String, expectedExerciseSlugs: Set<String>): WorkshopResult {
+        val lines = recognizedText
+            .lineSequence()
+            .map(::normalizeLine)
+            .filter(String::isNotBlank)
+            .toList()
 
-    fun parse(rawValue: String, expectedExerciseSlugs: Set<String>): WorkshopQrResult {
-        val raw = rawValue.trim()
-        require(raw.isNotEmpty()) { "QR-код пуст." }
-        require(raw.length <= MAX_QR_LENGTH) { "QR-код слишком большой." }
-
-        val jsonText = if (raw.startsWith(WORKSHOP_QR_PREFIX)) {
-            val encoded = raw.removePrefix(WORKSHOP_QR_PREFIX)
-            runCatching {
-                String(Base64.getUrlDecoder().decode(encoded), Charsets.UTF_8)
-            }.getOrElse { throw IllegalArgumentException("Повреждённый QR-код CyberGym.") }
-        } else {
-            raw
+        require(recognizedText.isNotBlank()) { "Текст на экране не найден." }
+        require(recognizedText.length <= MAX_TEXT_LENGTH) { "Распознанный текст слишком большой." }
+        require(lines.any { it.contains("CYBERGYM") && it.contains("V1") }) {
+            "Наведи рамку на заголовок CYBERGYM RESULT V1."
+        }
+        require(lines.any { it == "END" || it.startsWith("END ") }) {
+            "В рамку не попал весь блок результатов."
         }
 
-        val payload = runCatching { json.decodeFromString<WorkshopPayloadDto>(jsonText) }
-            .getOrElse { throw IllegalArgumentException("Это не QR-код результата CyberGym.") }
+        val runId = fieldValue(lines, "RUN")
+        require(runId.length in MIN_RUN_ID_LENGTH..MAX_FIELD_LENGTH) {
+            "Не удалось распознать RUN ID."
+        }
+        val mapName = fieldValue(lines, "MAP")
+        require(mapName.length in MIN_MAP_NAME_LENGTH..MAX_FIELD_LENGTH) {
+            "Не удалось распознать название карты."
+        }
 
-        require(payload.version == 1) { "Версия QR-кода не поддерживается." }
-        require(payload.source == WORKSHOP_SOURCE) { "QR-код создан не картой CyberGym." }
-        require(payload.mapName.isNotBlank()) { "В QR-коде не указана карта." }
-        require(payload.runId.isNotBlank()) { "В QR-коде нет идентификатора запуска." }
-        require(payload.results.isNotEmpty()) { "В QR-коде нет результатов." }
-        require(payload.results.size <= MAX_RESULTS) { "В QR-коде слишком много упражнений." }
+        val exercises = lines
+            .filter { it.startsWith("EX ") }
+            .map(::parseExercise)
 
-        val duplicateSlugs = payload.results
+        require(exercises.isNotEmpty()) { "Не найдены строки EX с результатами." }
+        require(exercises.size <= MAX_RESULTS) { "Слишком много упражнений в результате." }
+
+        val duplicateSlugs = exercises
             .groupingBy { it.exerciseSlug }
             .eachCount()
             .filterValues { it > 1 }
             .keys
-        require(duplicateSlugs.isEmpty()) { "В QR-коде повторяются упражнения." }
+        require(duplicateSlugs.isEmpty()) { "Результаты упражнений повторяются." }
 
-        val actualSlugs = payload.results.map { it.exerciseSlug }.toSet()
+        val actualSlugs = exercises.map { it.exerciseSlug }.toSet()
         val missing = expectedExerciseSlugs - actualSlugs
         val unexpected = actualSlugs - expectedExerciseSlugs
         require(missing.isEmpty()) {
-            "QR-код не содержит результаты всей тренировки: ${missing.joinToString()}."
+            "Не распознаны результаты всей тренировки: ${missing.joinToString()}."
         }
         require(unexpected.isEmpty()) {
-            "QR-код содержит другое упражнение: ${unexpected.joinToString()}."
+            "На экране результат другого упражнения: ${unexpected.joinToString()}."
         }
 
-        return WorkshopQrResult(
-            mapName = payload.mapName,
-            runId = payload.runId,
-            completedAt = payload.completedAt,
-            exercises = payload.results.map { result ->
-                require(result.exerciseSlug.isNotBlank()) { "Не указан код упражнения." }
-                require(result.metrics.isNotEmpty()) { "Нет метрик для ${result.exerciseSlug}." }
-                require(result.metrics.size <= MAX_METRICS_PER_EXERCISE) {
-                    "Слишком много метрик для ${result.exerciseSlug}."
-                }
-                WorkshopExerciseResult(
-                    exerciseSlug = result.exerciseSlug,
-                    metrics = result.metrics.mapValues { (_, value) -> value.toEditableString() },
-                )
-            },
+        return WorkshopResult(
+            mapName = mapName.lowercase(),
+            runId = runId,
+            exercises = exercises,
         )
     }
 
-    private fun JsonPrimitive.toEditableString(): String =
-        contentOrNull ?: throw IllegalArgumentException("Метрика не содержит значения.")
+    fun looksComplete(recognizedText: String): Boolean {
+        val normalized = recognizedText.uppercase()
+        return "CYBERGYM" in normalized &&
+            "V1" in normalized &&
+            normalized.lineSequence().any(::isEndLine)
+    }
+
+    private fun fieldValue(lines: List<String>, field: String): String =
+        lines.firstOrNull { it.startsWith("$field ") }
+            ?.removePrefix("$field ")
+            ?.substringBefore(' ')
+            ?.trim()
+            .orEmpty()
+
+    private fun parseExercise(line: String): WorkshopExerciseResult {
+        val tokens = line.split(' ').filter(String::isNotBlank)
+        require(tokens.size >= MIN_EXERCISE_TOKENS) {
+            "Строка упражнения распознана не полностью."
+        }
+
+        val exerciseSlug = exerciseSlug(tokens[1])
+        val metricTokens = tokens.drop(2)
+        require(metricTokens.size % 2 == 0) { "Не удалось разделить названия и значения метрик." }
+
+        val metrics = metricTokens
+            .chunked(2)
+            .associate { pair ->
+                metricKey(pair[0]) to normalizeMetricValue(pair[1])
+            }
+        require(metrics.isNotEmpty()) { "Нет метрик для $exerciseSlug." }
+        require(metrics.size <= MAX_METRICS_PER_EXERCISE) { "Слишком много метрик для $exerciseSlug." }
+
+        return WorkshopExerciseResult(exerciseSlug = exerciseSlug, metrics = metrics)
+    }
+
+    private fun exerciseSlug(value: String): String =
+        when (value.uppercase()) {
+            "WARMUP", "FLICKS", "WARMUP_FLICKS" -> "warmup_flicks"
+            "AIM", "AIM50", "HEADSHOTS", "AIM_HEADSHOTS" -> "aim_headshots"
+            "SPRAY", "SPRAY5", "AK_SPRAY" -> "ak_spray"
+            "STRAFE", "STRAFE50", "COUNTER_STRAFE" -> "counter_strafe"
+            else -> value.lowercase()
+        }
+
+    private fun metricKey(value: String): String =
+        when (value.uppercase()) {
+            "ATT", "ATTEMPTS" -> "attempts"
+            "HIT", "HITS" -> "hits"
+            "HS", "HEADSHOTS" -> "headshots"
+            "ACC", "ACCURACY" -> "accuracy"
+            "STOPS", "SUCCESSFUL_STOPS" -> "successful_stops"
+            "SPEED", "AVG_SPEED", "AVG_STOP_SPEED" -> "avg_stop_speed"
+            "TIME", "DURATION", "DURATION_SECONDS" -> "duration_seconds"
+            "BEST", "BEST_TIME", "BEST_TIME_MS" -> "best_time_ms"
+            "AVG_TIME", "AVERAGE_TIME_MS" -> "average_time_ms"
+            "SCORE" -> "score"
+            else -> value.lowercase()
+        }
+
+    private fun normalizeMetricValue(value: String): String {
+        val normalized = value
+            .removeSuffix("%")
+            .replace(',', '.')
+            .trim()
+        require(normalized.isNotEmpty()) { "Распознано пустое значение метрики." }
+        return normalized
+    }
+
+    private fun normalizeLine(value: String): String =
+        value
+            .uppercase()
+            .replace(Regex("[:=|]+"), " ")
+            .replace(Regex("\\s+"), " ")
+            .trim()
+
+    private fun isEndLine(value: String): Boolean {
+        val line = normalizeLine(value)
+        return line == "END" || line.startsWith("END ")
+    }
 }
-
-@Serializable
-private data class WorkshopPayloadDto(
-    @SerialName("v") val version: Int,
-    val source: String,
-    @SerialName("map") val mapName: String,
-    @SerialName("run_id") val runId: String,
-    @SerialName("completed_at") val completedAt: String? = null,
-    val results: List<WorkshopExerciseResultDto>,
-)
-
-@Serializable
-private data class WorkshopExerciseResultDto(
-    @SerialName("exercise") val exerciseSlug: String,
-    val metrics: Map<String, JsonPrimitive>,
-)

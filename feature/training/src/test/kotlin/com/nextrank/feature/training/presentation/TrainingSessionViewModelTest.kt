@@ -91,7 +91,7 @@ class TrainingSessionViewModelTest {
     }
 
     @Test
-    fun `QR confirmation on last exercise completes session`() = runTest(dispatcher) {
+    fun `recognized result on last exercise completes session`() = runTest(dispatcher) {
         coEvery { repository.startOrResume("plan-1") } returns Result.Success(session)
         coEvery {
             repository.complete("session-1", any<List<TrainingResultSubmission>>(), any())
@@ -100,18 +100,14 @@ class TrainingSessionViewModelTest {
         val viewModel = TrainingSessionViewModel(repository)
         viewModel.load("plan-1")
         viewModel.completeCurrent()
-        viewModel.acceptQrCode(
+        viewModel.acceptRecognizedText(
             """
-            {
-              "v": 1,
-              "source": "cybergym_workshop",
-              "map": "cybergym_training_hub",
-              "run_id": "run-test",
-              "results": [
-                {"exercise":"warmup_flicks","metrics":{"hits":30}},
-                {"exercise":"aim_headshots","metrics":{"hits":50,"accuracy":82.5}}
-              ]
-            }
+            CYBERGYM RESULT V1
+            RUN RUN-TEST
+            MAP CYBERGYM_TRAINING_HUB
+            EX WARMUP ATTEMPTS 40 HITS 30
+            EX AIM50 ATTEMPTS 70 HITS 50 ACCURACY 82.5
+            END
             """.trimIndent(),
         )
         viewModel.confirmResults()
@@ -134,17 +130,17 @@ class TrainingSessionViewModelTest {
     }
 
     @Test
-    fun `invalid QR keeps custom scanner open`() = runTest(dispatcher) {
+    fun `invalid text keeps scanner open`() = runTest(dispatcher) {
         coEvery { repository.startOrResume("plan-1") } returns Result.Success(session)
 
         val viewModel = TrainingSessionViewModel(repository)
         viewModel.load("plan-1")
-        viewModel.beginQrScan()
+        viewModel.beginResultScan()
 
-        val accepted = viewModel.acceptQrCode("""{"v":1,"source":"other","results":[]}""")
+        val accepted = viewModel.acceptRecognizedText("NOT A CYBERGYM RESULT")
 
         assertFalse(accepted)
-        assertTrue(viewModel.uiState.value.isScanningQr)
+        assertTrue(viewModel.uiState.value.isScanningResult)
         assertTrue(viewModel.uiState.value.errorMessage != null)
     }
 }

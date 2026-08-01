@@ -43,7 +43,7 @@ dependencies {
     implementation(libs.androidx.camera.camera2)
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
-    implementation(libs.mlkit.barcode.scanning)
+    implementation(libs.mlkit.text.recognition)
     implementation(project(":core:common"))
     implementation(project(":core:designsystem"))
     implementation(project(":core:navigation"))

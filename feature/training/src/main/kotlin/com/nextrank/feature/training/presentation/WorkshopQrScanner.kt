@@ -38,7 +38,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.FlashOff
 import androidx.compose.material.icons.filled.FlashOn
-import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material.icons.automirrored.filled.TextSnippet
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -67,25 +67,25 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.google.mlkit.vision.barcode.BarcodeScanner
-import com.google.mlkit.vision.barcode.BarcodeScannerOptions
-import com.google.mlkit.vision.barcode.BarcodeScanning
-import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.TextRecognizer
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.nextrank.core.designsystem.component.GamerAccentLime
 import com.nextrank.core.designsystem.component.GamerHeader
 import com.nextrank.core.designsystem.component.GamerPanel
 import com.nextrank.core.designsystem.component.GamerPrimaryButton
 import com.nextrank.core.designsystem.component.GamerScreen
 import com.nextrank.core.designsystem.component.GamerSecondaryButton
+import com.nextrank.feature.training.domain.WorkshopTextParser
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.min
 
 @Composable
-internal fun WorkshopQrScanner(
+internal fun WorkshopResultScanner(
     errorMessage: String?,
-    onQrDetected: (String) -> Boolean,
+    onTextDetected: (String) -> Boolean,
     onClose: () -> Unit,
     onCameraError: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -115,7 +115,7 @@ internal fun WorkshopQrScanner(
     if (hasCameraPermission) {
         CameraScannerContent(
             errorMessage = errorMessage,
-            onQrDetected = onQrDetected,
+            onTextDetected = onTextDetected,
             onClose = onClose,
             onCameraError = onCameraError,
             modifier = modifier,
@@ -143,7 +143,7 @@ private fun CameraPermissionContent(
         Spacer(Modifier.weight(1f))
         GamerPanel(accent = GamerAccentLime) {
             Icon(
-                imageVector = Icons.Default.QrCodeScanner,
+                imageVector = Icons.AutoMirrored.Filled.TextSnippet,
                 contentDescription = null,
                 tint = GamerAccentLime,
                 modifier = Modifier
@@ -155,7 +155,7 @@ private fun CameraPermissionContent(
                 subtitle = if (permissionRequested) {
                     "Разреши CyberGym использовать камеру в настройках разрешений, чтобы считать результат с карты."
                 } else {
-                    "Камера используется только для распознавания QR-кода с итогового экрана Workshop."
+                    "Камера используется только для распознавания текста с итогового экрана Workshop."
                 },
             )
             GamerPrimaryButton(
@@ -171,7 +171,7 @@ private fun CameraPermissionContent(
 @Composable
 private fun CameraScannerContent(
     errorMessage: String?,
-    onQrDetected: (String) -> Boolean,
+    onTextDetected: (String) -> Boolean,
     onClose: () -> Unit,
     onCameraError: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -186,7 +186,7 @@ private fun CameraScannerContent(
             .background(Color.Black),
     ) {
         CameraPreview(
-            onQrDetected = onQrDetected,
+            onTextDetected = onTextDetected,
             onCameraReady = { camera = it },
             onCameraError = onCameraError,
             modifier = Modifier.fillMaxSize(),
@@ -205,7 +205,7 @@ private fun CameraScannerContent(
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Закрыть сканер")
             }
             Text(
-                text = "СКАНЕР CYBERGYM",
+                text = "СКАНЕР РЕЗУЛЬТАТА",
                 color = Color.White,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Black,
@@ -241,14 +241,14 @@ private fun CameraScannerContent(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
-                text = "Наведи камеру на QR-код",
+                text = "Наведи камеру на текст результатов",
                 color = Color.White,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.ExtraBold,
                 textAlign = TextAlign.Center,
             )
             Text(
-                text = "Код распознается автоматически. Держи его внутри рамки.",
+                text = "Весь блок от CYBERGYM RESULT V1 до END должен находиться внутри рамки.",
                 color = Color.White.copy(alpha = 0.72f),
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center,
@@ -365,14 +365,14 @@ private fun ScannerOverlay(modifier: Modifier = Modifier) {
 
 @Composable
 private fun CameraPreview(
-    onQrDetected: (String) -> Boolean,
+    onTextDetected: (String) -> Boolean,
     onCameraReady: (Camera) -> Unit,
     onCameraError: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    val currentOnQrDetected by rememberUpdatedState(onQrDetected)
+    val currentOnTextDetected by rememberUpdatedState(onTextDetected)
     val currentOnCameraError by rememberUpdatedState(onCameraError)
     val previewView = remember {
         PreviewView(context).apply {
@@ -388,8 +388,8 @@ private fun CameraPreview(
 
     DisposableEffect(lifecycleOwner, previewView) {
         val analysisExecutor = Executors.newSingleThreadExecutor()
-        val analyzer = CyberGymQrAnalyzer(
-            onQrDetected = { currentOnQrDetected(it) },
+        val analyzer = CyberGymTextAnalyzer(
+            onTextDetected = { currentOnTextDetected(it) },
             onFailure = { currentOnCameraError(it) },
         )
         val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
@@ -434,18 +434,15 @@ private fun CameraPreview(
     }
 }
 
-private class CyberGymQrAnalyzer(
-    private val onQrDetected: (String) -> Boolean,
+private class CyberGymTextAnalyzer(
+    private val onTextDetected: (String) -> Boolean,
     private val onFailure: (String) -> Unit,
 ) : ImageAnalysis.Analyzer, AutoCloseable {
     private val processing = AtomicBoolean(false)
     private val resultDelivered = AtomicBoolean(false)
     private val errorDelivered = AtomicBoolean(false)
-    private val scanner: BarcodeScanner = BarcodeScanning.getClient(
-        BarcodeScannerOptions.Builder()
-            .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
-            .build(),
-    )
+    private val recognizer: TextRecognizer =
+        TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
     private var lastRejectedValue: String? = null
     private var lastRejectedAt: Long = 0L
 
@@ -466,11 +463,11 @@ private class CyberGymQrAnalyzer(
             mediaImage,
             imageProxy.imageInfo.rotationDegrees,
         )
-        scanner.process(inputImage)
-            .addOnSuccessListener { barcodes ->
-                val rawValue = barcodes.firstNotNullOfOrNull { it.rawValue }
-                if (rawValue != null && shouldProcess(rawValue)) {
-                    val accepted = onQrDetected(rawValue)
+        recognizer.process(inputImage)
+            .addOnSuccessListener { recognized ->
+                val rawValue = recognized.text
+                if (WorkshopTextParser.looksComplete(rawValue) && shouldProcess(rawValue)) {
+                    val accepted = onTextDetected(rawValue)
                     if (accepted) {
                         resultDelivered.set(true)
                     } else {
@@ -481,7 +478,7 @@ private class CyberGymQrAnalyzer(
             }
             .addOnFailureListener { error ->
                 if (errorDelivered.compareAndSet(false, true)) {
-                    onFailure(error.message ?: "Ошибка распознавания QR-кода.")
+                    onFailure(error.message ?: "Ошибка распознавания текста.")
                 }
             }
             .addOnCompleteListener {
@@ -492,13 +489,13 @@ private class CyberGymQrAnalyzer(
 
     private fun shouldProcess(rawValue: String): Boolean =
         rawValue != lastRejectedValue ||
-            SystemClock.elapsedRealtime() - lastRejectedAt >= REJECTED_CODE_RETRY_MS
+            SystemClock.elapsedRealtime() - lastRejectedAt >= REJECTED_TEXT_RETRY_MS
 
     override fun close() {
-        scanner.close()
+        recognizer.close()
     }
 
     private companion object {
-        const val REJECTED_CODE_RETRY_MS = 1_500L
+        const val REJECTED_TEXT_RETRY_MS = 1_500L
     }
 }

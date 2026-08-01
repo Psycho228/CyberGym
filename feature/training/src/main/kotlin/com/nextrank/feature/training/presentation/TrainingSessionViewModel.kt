@@ -7,8 +7,8 @@ import com.nextrank.core.common.result.Result
 import com.nextrank.feature.training.domain.TrainingExercise
 import com.nextrank.feature.training.domain.TrainingRepository
 import com.nextrank.feature.training.domain.TrainingResultSubmission
-import com.nextrank.feature.training.domain.WorkshopQrParser
-import com.nextrank.feature.training.domain.WorkshopQrResult
+import com.nextrank.feature.training.domain.WorkshopResult
+import com.nextrank.feature.training.domain.WorkshopTextParser
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -25,8 +25,8 @@ data class TrainingSessionUiState(
     val exercises: List<TrainingExercise> = emptyList(),
     val currentIndex: Int = 0,
     val errorMessage: String? = null,
-    val isScanningQr: Boolean = false,
-    val scannedResult: WorkshopQrResult? = null,
+    val isScanningResult: Boolean = false,
+    val scannedResult: WorkshopResult? = null,
     val isCompleting: Boolean = false,
     val isComplete: Boolean = false,
 )
@@ -70,31 +70,31 @@ class TrainingSessionViewModel(private val repository: TrainingRepository) : Vie
         }
     }
 
-    fun beginQrScan() {
+    fun beginResultScan() {
         val state = _uiState.value
         if (state.isCompleting || state.isComplete) return
-        _uiState.update { it.copy(isScanningQr = true, errorMessage = null) }
+        _uiState.update { it.copy(isScanningResult = true, errorMessage = null) }
     }
 
-    fun finishQrScan(message: String? = null) {
+    fun finishResultScan(message: String? = null) {
         _uiState.update {
             it.copy(
-                isScanningQr = false,
+                isScanningResult = false,
                 errorMessage = message?.let { reason ->
-                    "Не удалось открыть QR-сканер. $reason"
+                    "Не удалось открыть сканер результата. $reason"
                 },
             )
         }
     }
 
-    fun acceptQrCode(rawValue: String): Boolean {
+    fun acceptRecognizedText(rawValue: String): Boolean {
         val expectedSlugs = _uiState.value.exercises.map { it.slug }.toSet()
-        val parsedResult = runCatching { WorkshopQrParser.parse(rawValue, expectedSlugs) }
+        val parsedResult = runCatching { WorkshopTextParser.parse(rawValue, expectedSlugs) }
         return parsedResult.fold(
             onSuccess = { result ->
                 _uiState.update {
                     it.copy(
-                        isScanningQr = false,
+                        isScanningResult = false,
                         scannedResult = result,
                         errorMessage = null,
                     )
@@ -104,8 +104,8 @@ class TrainingSessionViewModel(private val repository: TrainingRepository) : Vie
             onFailure = { error ->
                 _uiState.update {
                     it.copy(
-                        isScanningQr = true,
-                        errorMessage = error.message ?: "QR-код результата не распознан.",
+                        isScanningResult = true,
+                        errorMessage = error.message ?: "Текст результата не распознан.",
                     )
                 }
                 false
@@ -131,7 +131,7 @@ class TrainingSessionViewModel(private val repository: TrainingRepository) : Vie
         }
     }
 
-    fun rescanQr() {
+    fun rescanResult() {
         _uiState.update { it.copy(scannedResult = null, errorMessage = null) }
     }
 
@@ -176,7 +176,7 @@ class TrainingSessionViewModel(private val repository: TrainingRepository) : Vie
         }
     }
 
-    private fun hasBlankMetrics(result: WorkshopQrResult): Boolean =
+    private fun hasBlankMetrics(result: WorkshopResult): Boolean =
         result.exercises.any { exercise -> exercise.metrics.values.any(String::isBlank) }
 
     private fun buildCompleteErrorMessage(result: Result.Failure): String =

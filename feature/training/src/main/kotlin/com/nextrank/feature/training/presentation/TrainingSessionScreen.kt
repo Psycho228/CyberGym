@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material.icons.automirrored.filled.TextSnippet
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
@@ -32,7 +32,7 @@ import com.nextrank.core.designsystem.component.GamerPanel
 import com.nextrank.core.designsystem.component.GamerPrimaryButton
 import com.nextrank.core.designsystem.component.GamerScreen
 import com.nextrank.core.designsystem.component.GamerSecondaryButton
-import com.nextrank.feature.training.domain.WorkshopQrResult
+import com.nextrank.feature.training.domain.WorkshopResult
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -48,12 +48,12 @@ fun TrainingSessionScreen(
     LaunchedEffect(sessionId) { viewModel.load(sessionId) }
     LaunchedEffect(state.isComplete) { if (state.isComplete) onComplete() }
 
-    if (state.isScanningQr) {
-        WorkshopQrScanner(
+    if (state.isScanningResult) {
+        WorkshopResultScanner(
             errorMessage = state.errorMessage,
-            onQrDetected = viewModel::acceptQrCode,
-            onClose = { viewModel.finishQrScan() },
-            onCameraError = { viewModel.finishQrScan(it) },
+            onTextDetected = viewModel::acceptRecognizedText,
+            onClose = { viewModel.finishResultScan() },
+            onCameraError = { viewModel.finishResultScan(it) },
             modifier = modifier,
         )
         return
@@ -79,7 +79,7 @@ fun TrainingSessionScreen(
                     actions = WorkshopResultReviewActions(
                         onMetricChange = viewModel::updateMetric,
                         onConfirm = viewModel::confirmResults,
-                        onRescan = viewModel::rescanQr,
+                        onRescan = viewModel::rescanResult,
                     ),
                     modifier = Modifier.weight(1f),
                 )
@@ -87,13 +87,13 @@ fun TrainingSessionScreen(
             state.exercises.isNotEmpty() -> {
                 GamerHeader(
                     title = state.planTitle.ifBlank { "Тренировка" },
-                    subtitle = "Пройди задания на карте CyberGym Workshop. После финиша отсканируй QR-код с результатами.",
+                    subtitle = "Пройди задания на карте CyberGym Workshop. После финиша наведи камеру на текст результатов.",
                 )
                 TrainingExerciseContent(
                     state = state,
                     onBack = onBack,
                     onCompleteCurrent = viewModel::completeCurrent,
-                    onScanQr = viewModel::beginQrScan,
+                    onScanResult = viewModel::beginResultScan,
                     modifier = Modifier.weight(1f),
                 )
             }
@@ -106,7 +106,7 @@ private fun TrainingExerciseContent(
     state: TrainingSessionUiState,
     onBack: () -> Unit,
     onCompleteCurrent: () -> Unit,
-    onScanQr: () -> Unit,
+    onScanResult: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val exercise = state.exercises[state.currentIndex]
@@ -163,18 +163,18 @@ private fun TrainingExerciseContent(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
-                        imageVector = Icons.Default.QrCodeScanner,
+                        imageVector = Icons.AutoMirrored.Filled.TextSnippet,
                         contentDescription = null,
                         tint = GamerAccentOrange,
                     )
                     Text(
-                        text = "Финиш через QR",
+                        text = "Финиш по результату карты",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                     )
                 }
                 Text(
-                    text = "Заверши тренировку на карте и наведи камеру телефона на QR-код итогового экрана.",
+                    text = "Заверши тренировку на карте и наведи камеру на весь текстовый блок результатов.",
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -185,7 +185,7 @@ private fun TrainingExerciseContent(
                 isLastExercise -> "Завершить тренировку"
                 else -> "Следующее упражнение"
             },
-            onClick = if (isLastExercise) onScanQr else onCompleteCurrent,
+            onClick = if (isLastExercise) onScanResult else onCompleteCurrent,
         )
         GamerSecondaryButton(text = "Выйти", onClick = onBack)
     }
@@ -193,7 +193,7 @@ private fun TrainingExerciseContent(
 
 @Composable
 private fun WorkshopResultReview(
-    result: WorkshopQrResult,
+    result: WorkshopResult,
     state: TrainingSessionUiState,
     actions: WorkshopResultReviewActions,
     modifier: Modifier = Modifier,
@@ -217,7 +217,7 @@ private fun WorkshopResultReview(
                     )
                     Text(result.mapName, fontWeight = FontWeight.Bold)
                 }
-                GamerChip(text = "QR подтверждён", accent = GamerAccentLime)
+                GamerChip(text = "Текст распознан", accent = GamerAccentLime)
             }
         }
 
